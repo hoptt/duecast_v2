@@ -1,0 +1,792 @@
+@import "tailwindcss";
+
+/* ============================================================
+   듀캐스트 디자인 시스템
+   Atmospheric Window — 화면이 곧 하늘이 되는 경험
+   ============================================================ */
+
+:root {
+  /* ----- 날씨 배경 그라데이션 (뉴모피즘 v3 — #ECF0F3 기반 중성 그레이 톤) ----- */
+  --weather-clear-from: #E3EDF5;
+  --weather-clear-to: #EEF4F8;
+  --weather-clouds-from: #E0E4EA;
+  --weather-clouds-to: #E8ECF0;
+  --weather-rain-from: #D8DFE8;
+  --weather-rain-to: #E2E9F0;
+  --weather-snow-from: #E8EAF4;
+  --weather-snow-to: #F0F0F6;
+  --weather-thunder-from: #D0D8E0;
+  --weather-thunder-to: #DCE2E8;
+  --weather-mist-from: #E0E5EB;
+  --weather-mist-to: #E8ECF0;
+
+  /* ----- 앱 컬러 시스템 (라이트 모드) ----- */
+  /* Atmospheric Window 컨셉: 새벽빛 하늘빛 팔레트 */
+  --color-primary: #2e7cf6;
+  --color-primary-hover: #1a6ae0;
+  --color-primary-soft: rgba(46, 124, 246, 0.12);
+
+  --color-surface: #eef6fb;
+  --color-surface-card: rgba(255, 255, 255, 0.72);
+  --color-surface-elevated: rgba(255, 255, 255, 0.90);
+
+  --color-text-main: #0f2440;
+  --color-text-sub: #4a6080;
+  --color-text-muted: #6B8299;
+  --color-text-inverse: #ffffff;
+
+  --color-border: rgba(15, 36, 64, 0.08);
+  --color-divider: rgba(15, 36, 64, 0.06);
+
+  /* ----- 뉴모피즘 변수 (라이트 모드) ----- */
+  --neu-bg: #ECF0F3;
+  --neu-shadow-light: #FFFFFF;
+  --neu-shadow-dark: #D1D9E6;
+  --neu-shadow-light-strong: #FFFFFF;
+  --neu-shadow-dark-strong: #C8D0DD;
+  --neu-inset-light: #FFFFFF;
+  --neu-inset-dark: #D1D9E6;
+  --neu-shimmer: #F5F7FA;
+  --neu-edge-highlight: transparent;
+
+  /* ----- 컨텐츠 바깥 영역 배경 (데스크탑/태블릿) ----- */
+  --outer-bg: #D5D8DC;
+
+  /* ----- 네비게이션 탭 색상 ----- */
+  --nav-tab-active:   var(--color-text-main);
+  --nav-tab-inactive: rgba(15, 36, 64, 0.38);
+
+  /* ----- 인터랙션 오버레이 (라이트 모드) ----- */
+  --overlay-hover:         rgba(15, 36, 64, 0.05);
+  --overlay-active:        rgba(15, 36, 64, 0.09);
+  --overlay-selected:      rgba(15, 36, 64, 0.07);
+  --overlay-badge:         rgba(15, 36, 64, 0.09);
+  --overlay-divider:       color-mix(in srgb, #0f2440 12%, white);
+  --overlay-handle:        rgba(15, 36, 64, 0.14);
+  --overlay-cell:          rgba(15, 36, 64, 0.04);
+  --overlay-border:        rgba(15, 36, 64, 0.08);
+  --overlay-border-subtle: rgba(15, 36, 64, 0.04);
+  --overlay-accent:        rgba(16, 185, 129, 0.07);
+  --overlay-backdrop:      rgba(0, 0, 0, 0.40);
+
+  /* ----- 테마 의존 공통 색상 ----- */
+  --star-empty:    rgba(15, 36, 64, 0.12);
+  --tag-good:      #059669;   /* emerald-600 */
+  --tag-bad:       #ea580c;   /* orange-600  */
+  --metric-good:   #059669;
+  --metric-mid:    #b45309;   /* amber-700   */
+  --metric-bad:    #c2410c;   /* orange-700  */
+
+  /* ----- 강수 텍스트 ----- */
+  --precip-text:   #2563eb;   /* blue-600 */
+
+  /* ----- SVG 트랙/지평선 (일출일몰 카드) ----- */
+  --svg-track:     rgba(15, 36, 64, 0.14);
+  --svg-horizon:   rgba(15, 36, 64, 0.16);
+
+  /* ----- 생활지수 링 트랙 & 등급 텍스트 ----- */
+  --ring-track:    rgba(15, 36, 64, 0.10);
+  --grade-good:    #059669;
+  --grade-mid:     #b45309;
+  --grade-bad:     #c2410c;
+
+  /* ----- 타이포그래피 스케일 ----- */
+  --font-display: var(--font-g), "Apple SD Gothic Neo", sans-serif;   /* 기온·점수 대형 표시 */
+
+  --text-temp-display: 72px;   /* 메인 기온 */
+  --text-temp-large: 52px;     /* 보조 기온 */
+  --text-temp-medium: 36px;    /* 타임라인 기온 */
+  --text-guide: 15px;          /* 가이드 메시지 */
+  --text-label: 12px;          /* 레이블, 시각 */
+  --text-body: 16px;           /* 기본 본문 */
+
+  --weight-thin: 300;
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  --leading-tight: 1.1;
+  --leading-snug: 1.3;
+  --leading-normal: 1.6;
+
+  /* ----- 간격 / 형태 ----- */
+  --radius-card: 16px;
+  --radius-card-sm: 12px;
+  --radius-pill: 9999px;
+  --radius-chip: 10px;
+  --radius-icon: 12px;
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* ----- 트랜지션 ----- */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bg: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ----- 레거시 호환 (Tailwind @theme 연동) ----- */
+  --background: var(--color-surface);
+  --foreground: var(--color-text-main);
+}
+
+/* ============================================================
+   다크 모드 (시간대 기반 자동: 18:00–06:00 / 수동 토글)
+   기본은 prefers-color-scheme, JS에서 [data-theme="dark"] 오버라이드
+   ============================================================ */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* 날씨 배경 그라데이션 다크 버전 (사용자 피드백 반영 v2) */
+    --weather-clear-from: #1c2a3d;
+    --weather-clear-to: #243448;
+    --weather-clouds-from: #2a3238;
+    --weather-clouds-to: #323a40;
+    --weather-rain-from: #263238;
+    --weather-rain-to: #37474f;
+    --weather-snow-from: #1a237e;
+    --weather-snow-to: #303f9f;
+    --weather-thunder-from: #1b1b2f;
+    --weather-thunder-to: #2c2c4a;
+    --weather-mist-from: #2d3235;
+    --weather-mist-to: #353a3d;
+
+    /* 앱 컬러 다크 버전 */
+    --color-primary: #5b9bff;
+    --color-primary-hover: #7ab0ff;
+    --color-primary-soft: rgba(91, 155, 255, 0.14);
+
+    --color-surface: #0a1628;
+    --color-surface-card: rgba(15, 36, 64, 0.75);
+    --color-surface-elevated: rgba(20, 48, 84, 0.90);
+
+    --color-text-main: #e8f4fd;
+    --color-text-sub: #8aaec8;
+    --color-text-muted: #7090ac;
+    --color-text-inverse: #0f2440;
+
+    --color-border: rgba(232, 244, 253, 0.08);
+    --color-divider: rgba(232, 244, 253, 0.05);
+
+    /* 뉴모피즘 다크 버전 — solid HSL 변형 방식 (bg #0e1a2e = HSL 218°,53%,12%) */
+    --neu-bg: #0e1a2e;
+    --neu-shadow-light: #172e52;          /* bg +10% lightness (완화) */
+    --neu-shadow-dark: #020408;           /* bg -10% lightness */
+    --neu-shadow-light-strong: #1e3864;   /* bg +14% lightness (완화) */
+    --neu-shadow-dark-strong: #010204;    /* bg -11% lightness */
+    --neu-inset-light: #172e52;           /* raised light 재사용 */
+    --neu-inset-dark: #020408;            /* raised dark 재사용 */
+    --neu-shimmer: #1a2b42;
+    --neu-edge-highlight: rgba(80, 130, 200, 0.12);
+
+    /* 컨텐츠 바깥 영역 배경 */
+    --outer-bg: #060C18;
+
+    --nav-tab-active:   #ffffff;
+    --nav-tab-inactive: rgba(255, 255, 255, 0.50);
+
+    --overlay-hover:         rgba(255, 255, 255, 0.08);
+    --overlay-active:        rgba(255, 255, 255, 0.12);
+    --overlay-selected:      rgba(255, 255, 255, 0.10);
+    --overlay-badge:         rgba(255, 255, 255, 0.15);
+    --overlay-divider:       color-mix(in srgb, #e8f4fd 12%, #0f2440);
+    --overlay-handle:        rgba(255, 255, 255, 0.20);
+    --overlay-cell:          rgba(255, 255, 255, 0.05);
+    --overlay-border:        rgba(255, 255, 255, 0.08);
+    --overlay-border-subtle: rgba(255, 255, 255, 0.04);
+    --overlay-accent:        rgba(16, 185, 129, 0.05);
+    --overlay-backdrop:      rgba(0, 0, 0, 0.60);
+
+    --star-empty:    rgba(255, 255, 255, 0.24);
+    --tag-good:      #6ee7b7;   /* emerald-300 */
+    --tag-bad:       #fdba74;   /* orange-300  */
+    --metric-good:   rgba(52, 211, 153, 0.90);
+    --metric-mid:    rgba(251, 191,  36, 0.90);
+    --metric-bad:    rgba(251, 146,  60, 0.90);
+
+    --precip-text:   rgba(147, 197, 253, 0.85);
+    --svg-track:     rgba(255, 255, 255, 0.22);
+    --svg-horizon:   rgba(255, 255, 255, 0.25);
+    --ring-track:    rgba(255, 255, 255, 0.08);
+    --grade-good:    rgba(52, 211, 153, 0.90);
+    --grade-mid:     rgba(251, 191,  36, 0.90);
+    --grade-bad:     rgba(251, 146,  60, 0.90);
+
+    --background: var(--color-surface);
+    --foreground: var(--color-text-main);
+  }
+}
+
+/* 수동 다크 토글 (JS: document.documentElement.setAttribute('data-theme', 'dark')) */
+[data-theme="dark"] {
+  --weather-clear-from: #1c2a3d;
+  --weather-clear-to: #243448;
+  --weather-clouds-from: #2a3238;
+  --weather-clouds-to: #323a40;
+  --weather-rain-from: #263238;
+  --weather-rain-to: #37474f;
+  --weather-snow-from: #1a237e;
+  --weather-snow-to: #303f9f;
+  --weather-thunder-from: #1b1b2f;
+  --weather-thunder-to: #2c2c4a;
+  --weather-mist-from: #2d3235;
+  --weather-mist-to: #353a3d;
+
+  --color-primary: #5b9bff;
+  --color-primary-hover: #7ab0ff;
+  --color-primary-soft: rgba(91, 155, 255, 0.14);
+  --color-surface: #0a1628;
+  --color-surface-card: rgba(15, 36, 64, 0.75);
+  --color-surface-elevated: rgba(20, 48, 84, 0.90);
+  --color-text-main: #e8f4fd;
+  --color-text-sub: #8aaec8;
+  --color-text-muted: #7090ac;
+  --color-text-inverse: #0f2440;
+  --color-border: rgba(232, 244, 253, 0.08);
+  --color-divider: rgba(232, 244, 253, 0.05);
+  --neu-bg: #0e1a2e;
+  --neu-shadow-light: #172e52;          /* bg +10% lightness (완화) */
+  --neu-shadow-dark: #020408;           /* bg -10% lightness */
+  --neu-shadow-light-strong: #1e3864;   /* bg +14% lightness (완화) */
+  --neu-shadow-dark-strong: #010204;    /* bg -11% lightness */
+  --neu-inset-light: #172e52;
+  --neu-inset-dark: #020408;
+  --neu-shimmer: #1a2b42;
+  --neu-edge-highlight: rgba(80, 130, 200, 0.12);
+
+  /* 컨텐츠 바깥 영역 배경 */
+  --outer-bg: #060C18;
+
+  --nav-tab-active:   #ffffff;
+  --nav-tab-inactive: rgba(255, 255, 255, 0.50);
+
+  --overlay-hover:         rgba(255, 255, 255, 0.08);
+  --overlay-active:        rgba(255, 255, 255, 0.12);
+  --overlay-selected:      rgba(255, 255, 255, 0.10);
+  --overlay-badge:         rgba(255, 255, 255, 0.15);
+  --overlay-divider:       color-mix(in srgb, #e8f4fd 12%, #0f2440);
+  --overlay-handle:        rgba(255, 255, 255, 0.20);
+  --overlay-cell:          rgba(255, 255, 255, 0.05);
+  --overlay-border:        rgba(255, 255, 255, 0.08);
+  --overlay-border-subtle: rgba(255, 255, 255, 0.04);
+  --overlay-accent:        rgba(16, 185, 129, 0.05);
+  --overlay-backdrop:      rgba(0, 0, 0, 0.60);
+
+  --star-empty:    rgba(255, 255, 255, 0.24);
+  --tag-good:      #6ee7b7;
+  --tag-bad:       #fdba74;
+  --metric-good:   rgba(52, 211, 153, 0.90);
+  --metric-mid:    rgba(251, 191,  36, 0.90);
+  --metric-bad:    rgba(251, 146,  60, 0.90);
+
+  --precip-text:   rgba(147, 197, 253, 0.85);
+  --svg-track:     rgba(255, 255, 255, 0.22);
+  --svg-horizon:   rgba(255, 255, 255, 0.25);
+  --ring-track:    rgba(255, 255, 255, 0.08);
+  --grade-good:    rgba(52, 211, 153, 0.90);
+  --grade-mid:     rgba(251, 191,  36, 0.90);
+  --grade-bad:     rgba(251, 146,  60, 0.90);
+
+  --background: var(--color-surface);
+  --foreground: var(--color-text-main);
+}
+
+[data-theme="light"] {
+  --weather-clear-from: #E3EDF5;
+  --weather-clear-to: #EEF4F8;
+  --weather-clouds-from: #E0E4EA;
+  --weather-clouds-to: #E8ECF0;
+  --weather-rain-from: #D8DFE8;
+  --weather-rain-to: #E2E9F0;
+  --weather-snow-from: #E8EAF4;
+  --weather-snow-to: #F0F0F6;
+  --weather-thunder-from: #D0D8E0;
+  --weather-thunder-to: #DCE2E8;
+  --weather-mist-from: #E0E5EB;
+  --weather-mist-to: #E8ECF0;
+  --color-primary: #2e7cf6;
+  --color-primary-hover: #1a6ae0;
+  --color-primary-soft: rgba(46, 124, 246, 0.12);
+  --color-surface: #eef6fb;
+  --color-surface-card: rgba(255, 255, 255, 0.72);
+  --color-surface-elevated: rgba(255, 255, 255, 0.90);
+  --color-text-main: #0f2440;
+  --color-text-sub: #4a6080;
+  --color-text-muted: #6B8299;
+  --color-text-inverse: #ffffff;
+  --color-border: rgba(15, 36, 64, 0.08);
+  --color-divider: rgba(15, 36, 64, 0.06);
+  --neu-bg: #ECF0F3;
+  --neu-shadow-light: #FFFFFF;
+  --neu-shadow-dark: #D1D9E6;
+  --neu-shadow-light-strong: #FFFFFF;
+  --neu-shadow-dark-strong: #C8D0DD;
+  --neu-inset-light: #FFFFFF;
+  --neu-inset-dark: #D1D9E6;
+  --neu-shimmer: #F5F7FA;
+
+  /* 컨텐츠 바깥 영역 배경 */
+  --outer-bg: #D5D8DC;
+
+  --nav-tab-active:   var(--color-text-main);
+  --nav-tab-inactive: rgba(15, 36, 64, 0.38);
+
+  --overlay-hover:         rgba(15, 36, 64, 0.05);
+  --overlay-active:        rgba(15, 36, 64, 0.09);
+  --overlay-selected:      rgba(15, 36, 64, 0.07);
+  --overlay-badge:         rgba(15, 36, 64, 0.09);
+  --overlay-divider:       color-mix(in srgb, #0f2440 12%, white);
+  --overlay-handle:        rgba(15, 36, 64, 0.14);
+  --overlay-cell:          rgba(15, 36, 64, 0.04);
+  --overlay-border:        rgba(15, 36, 64, 0.08);
+  --overlay-border-subtle: rgba(15, 36, 64, 0.04);
+  --overlay-accent:        rgba(16, 185, 129, 0.07);
+  --overlay-backdrop:      rgba(0, 0, 0, 0.40);
+
+  --star-empty:    rgba(15, 36, 64, 0.12);
+  --tag-good:      #059669;
+  --tag-bad:       #ea580c;
+  --metric-good:   #059669;
+  --metric-mid:    #b45309;
+  --metric-bad:    #c2410c;
+
+  --precip-text:   #2563eb;
+  --svg-track:     rgba(15, 36, 64, 0.14);
+  --svg-horizon:   rgba(15, 36, 64, 0.16);
+  --ring-track:    rgba(15, 36, 64, 0.10);
+  --grade-good:    #059669;
+  --grade-mid:     #b45309;
+  --grade-bad:     #c2410c;
+
+  --background: var(--color-surface);
+  --foreground: var(--color-text-main);
+}
+
+/* ============================================================
+   Tailwind v4 @theme — 디자인 토큰 → 유틸리티 클래스 연동
+   ============================================================ */
+
+@theme inline {
+  /* 폰트 */
+  --font-sans: var(--font-g);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display);
+
+  /* 컬러 */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--color-primary);
+  --color-surface: var(--color-surface);
+  --color-text-main: var(--color-text-main);
+  --color-text-sub: var(--color-text-sub);
+  --color-text-muted: var(--color-text-muted);
+
+  /* border-radius */
+  --radius-card: var(--radius-card);
+  --radius-pill: var(--radius-pill);
+  --radius-chip: var(--radius-chip);
+}
+
+/* ============================================================
+   글로벌 베이스 스타일
+   ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background: var(--outer-bg);
+  color: var(--foreground);
+  /* 로컬 폰트 (g_Light/Medium/Bold) + 한국어 시스템 폰트 폴백 */
+  font-family: var(--font-g), "Apple SD Gothic Neo", "Malgun Gothic",
+    "맑은 고딕", -apple-system, sans-serif;
+  font-size: var(--text-body);
+  font-weight: 300;
+  line-height: var(--leading-normal);
+  transition: background var(--transition-bg), color var(--transition-base);
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+
+
+/* ============================================================
+   뉴모피즘 유틸리티 클래스
+   ============================================================ */
+
+@layer components {
+  /* 볼록(convex) 표면 — 기본 뉴모픽 카드 */
+  .neu-raised {
+    background: var(--neu-bg);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--neu-edge-highlight);
+    box-shadow:
+      -2px -2px 8px var(--neu-shadow-light),
+       2px  2px 8px var(--neu-shadow-dark);
+    transition: background var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base);
+  }
+
+  /* 강한 깊이의 볼록 표면 */
+  .neu-raised-lg {
+    background: var(--neu-bg);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--neu-edge-highlight);
+    box-shadow:
+      -3px -3px 10px var(--neu-shadow-light-strong),
+       3px  3px 10px var(--neu-shadow-dark-strong);
+    transition: background var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base);
+  }
+
+  /* 오목(concave) 표면 — 입력 필드/활성 상태 (전체 커버리지 유지) */
+  .neu-pressed {
+    background: var(--neu-bg);
+    border: 1px solid transparent;
+    box-shadow:
+      inset -3px -3px 9px var(--neu-inset-light),
+      inset  3px  3px 9px var(--neu-inset-dark);
+    transition: box-shadow var(--transition-base), background var(--transition-base);
+  }
+
+  /* 미세한 볼록 표면 */
+  .neu-flat {
+    background: var(--neu-bg);
+    border: 1px solid var(--neu-edge-highlight);
+    box-shadow:
+      -2px -2px 6px var(--neu-shadow-light),
+       2px  2px 6px var(--neu-shadow-dark);
+    transition: background var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base);
+  }
+
+  /* 인터랙티브 버튼 — :active 시 pressed로 전환 */
+  .neu-button {
+    background: var(--neu-bg);
+    border: 1px solid var(--neu-edge-highlight);
+    box-shadow:
+      -2px -2px 7px var(--neu-shadow-light),
+       2px  2px 7px var(--neu-shadow-dark);
+    transition: background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  }
+
+  .neu-button:active {
+    box-shadow:
+      inset -2px -2px 6px var(--neu-inset-light),
+      inset  2px  2px 6px var(--neu-inset-dark);
+  }
+
+  /* 알약형 뉴모픽 — 토글, 칩 */
+  .neu-pill {
+    background: var(--neu-bg);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--neu-edge-highlight);
+    box-shadow:
+      -2px -2px 6px var(--neu-shadow-light),
+       2px  2px 6px var(--neu-shadow-dark);
+    transition: background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  }
+
+  .neu-pill:active {
+    box-shadow:
+      inset -2px -2px 4px var(--neu-inset-light),
+      inset  2px  2px 4px var(--neu-inset-dark);
+  }
+
+  /* 원형 뉴모픽 — 아이콘 버튼 */
+  .neu-circle {
+    background: var(--neu-bg);
+    border-radius: 9999px;
+    border: 1px solid var(--neu-edge-highlight);
+    box-shadow:
+      -2px -2px 6px var(--neu-shadow-light),
+       2px  2px 6px var(--neu-shadow-dark);
+    transition: background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  }
+
+  .neu-circle:active {
+    box-shadow:
+      inset -2px -2px 4px var(--neu-inset-light),
+      inset  2px  2px 4px var(--neu-inset-dark);
+  }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .neu-raised, .neu-raised-lg, .neu-pressed, .neu-flat,
+  .neu-button, .neu-pill, .neu-circle {
+    transition: none;
+  }
+}
+
+/* ============================================================
+   날씨 배경 그라데이션 유틸리티
+   ============================================================ */
+
+.weather-bg {
+  background: linear-gradient(
+    160deg,
+    var(--weather-bg-from, var(--weather-clear-from)) 0%,
+    var(--weather-bg-to, var(--weather-clear-to)) 100%
+  );
+  transition: background var(--transition-bg);
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.weather-bg-clear    { --weather-bg-from: var(--weather-clear-from);   --weather-bg-to: var(--weather-clear-to); }
+.weather-bg-clouds   { --weather-bg-from: var(--weather-clouds-from);  --weather-bg-to: var(--weather-clouds-to); }
+.weather-bg-rain     { --weather-bg-from: var(--weather-rain-from);    --weather-bg-to: var(--weather-rain-to); }
+.weather-bg-snow     { --weather-bg-from: var(--weather-snow-from);    --weather-bg-to: var(--weather-snow-to); }
+.weather-bg-thunder  { --weather-bg-from: var(--weather-thunder-from); --weather-bg-to: var(--weather-thunder-to); }
+.weather-bg-mist     { --weather-bg-from: var(--weather-mist-from);    --weather-bg-to: var(--weather-mist-to); }
+
+/* ============================================================
+   타이포그래피 유틸리티
+   ============================================================ */
+
+/* 기온 표시 — 로컬 폰트 Bold, 숫자 강조 */
+.text-temperature {
+  font-family: var(--font-display);
+  font-style: normal;
+  font-weight: 700;
+  font-size: var(--text-temp-display);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.03em;
+  color: var(--color-text-main);
+}
+
+.text-temperature-lg {
+  font-family: var(--font-display);
+  font-style: normal;
+  font-weight: 700;
+  font-size: var(--text-temp-large);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.03em;
+}
+
+.text-temperature-md {
+  font-family: var(--font-display);
+  font-style: normal;
+  font-weight: 700;
+  font-size: var(--text-temp-medium);
+  line-height: var(--leading-tight);
+}
+
+/* ============================================================
+   애니메이션 키프레임
+   ============================================================ */
+
+/* 스켈레톤 shimmer */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* pulse (Tailwind 기본 외 커스텀) */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 0.25; }
+}
+
+/* 날씨 아이콘 부유 */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+
+/* 페이드인 슬라이드업 (컴포넌트 진입) */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 배경 색상 부드러운 전환용 */
+@keyframes bg-breathe {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.92; }
+}
+
+/* ============================================================
+   애니메이션 유틸리티 클래스
+   ============================================================ */
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--neu-bg) 0%,
+    var(--neu-shimmer) 50%,
+    var(--neu-bg) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-fade-up {
+  animation: fade-up 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* 스태거드 진입 딜레이 */
+.animation-delay-100 { animation-delay: 100ms; }
+.animation-delay-200 { animation-delay: 200ms; }
+.animation-delay-300 { animation-delay: 300ms; }
+.animation-delay-350 { animation-delay: 350ms; }
+.animation-delay-400 { animation-delay: 400ms; }
+.animation-delay-450 { animation-delay: 450ms; }
+.animation-delay-500 { animation-delay: 500ms; }
+.animation-delay-550 { animation-delay: 550ms; }
+.animation-delay-600 { animation-delay: 600ms; }
+.animation-delay-650 { animation-delay: 650ms; }
+.animation-delay-700 { animation-delay: 700ms; }
+
+/* 스플래시 페이드아웃 */
+@keyframes splash-fade-out {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(1.02); }
+}
+
+.animate-splash-out {
+  animation: splash-fade-out 0.3s ease-in forwards;
+}
+
+/* ============================================================
+   스크롤바 스타일
+   ============================================================ */
+
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* ============================================================
+   포커스 스타일 (접근성)
+   ============================================================ */
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* 검색 input — 컨테이너가 포커스 영역이므로 자체 outline 제거 */
+input[type="text"]:focus-visible {
+  outline: none;
+}
+
+/* 하단 탭 내비게이션 버튼 — 브라우저 네이티브 외관 제거 */
+nav button {
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ============================================================
+   세이프 에어리어 (iOS notch 대응)
+   ============================================================ */
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* ============================================================
+   날씨별 뉴모피즘 배경 보정
+   날씨 배경 그라디언트에 맞게 --neu-bg와 그림자 변수를 조정
+   ============================================================ */
+
+/* ── 라이트 모드: 날씨별 뉴모피즘 보정 ── */
+
+/* 라이트 모드: 날씨별 텍스트 가독성 보정 (카드 배경은 고정) */
+[data-weather="clear"]       { --color-text-muted: #6a8098; }
+[data-weather="clouds"]      { --color-text-muted: #5e7590; }
+[data-weather="rain"],
+[data-weather="drizzle"]     { --color-text-muted: #5570a0; }
+[data-weather="snow"]        { --color-text-muted: #5a6590; }
+[data-weather="thunderstorm"]{ --color-text-muted: #527090; }
+[data-weather="mist"],
+[data-weather="fog"],
+[data-weather="haze"],
+[data-weather="dust"],
+[data-weather="sand"]        { --color-text-muted: #5a7088; }
+
+/* ── 다크 모드: 날씨별 텍스트 가독성 보정 (카드 배경은 고정) ── */
+@media (prefers-color-scheme: dark) {
+  [data-weather="clear"]       { --color-text-muted: #80a0c0; }
+  [data-weather="thunderstorm"]{ --color-text-muted: #8098b8; }
+  [data-weather="rain"],
+  [data-weather="drizzle"]     { --color-text-muted: #7a95b5; }
+  [data-weather="mist"],
+  [data-weather="fog"],
+  [data-weather="haze"],
+  [data-weather="dust"],
+  [data-weather="sand"]        { --color-text-muted: #85a0b8; }
+  [data-weather="clouds"]      { --color-text-muted: #7a98b5; }
+  [data-weather="snow"]        { --color-text-muted: #8a90b8; }
+}
+
+/* [data-theme="dark"] 수동 토글: 날씨별 텍스트 가독성 보정 (카드 배경은 고정) */
+[data-theme="dark"] [data-weather="clear"]       { --color-text-muted: #80a0c0; }
+[data-theme="dark"] [data-weather="thunderstorm"]{ --color-text-muted: #8098b8; }
+[data-theme="dark"] [data-weather="rain"],
+[data-theme="dark"] [data-weather="drizzle"]     { --color-text-muted: #7a95b5; }
+[data-theme="dark"] [data-weather="mist"],
+[data-theme="dark"] [data-weather="fog"],
+[data-theme="dark"] [data-weather="haze"],
+[data-theme="dark"] [data-weather="dust"],
+[data-theme="dark"] [data-weather="sand"]        { --color-text-muted: #85a0b8; }
+[data-theme="dark"] [data-weather="clouds"]      { --color-text-muted: #7a98b5; }
+[data-theme="dark"] [data-weather="snow"]        { --color-text-muted: #8a90b8; }
+
+/* ============================================================
+   Leaflet 지도 스타일 보정
+   ============================================================ */
+
+/* 줌 컨트롤 뉴모피즘 스타일 */
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.leaflet-control-zoom a {
+  background: var(--neu-bg) !important;
+  color: var(--color-text-sub) !important;
+  border: none !important;
+  box-shadow:
+    -1px -1px 4px var(--neu-shadow-light),
+     1px  1px 4px var(--neu-shadow-dark) !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background: var(--neu-bg) !important;
+  color: var(--color-text-main) !important;
+}
+
+/* 타일 로딩 배경 */
+.leaflet-container {
+  background: var(--neu-bg);
+  font-family: inherit;
+}
