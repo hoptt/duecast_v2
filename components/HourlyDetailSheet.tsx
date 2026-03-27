@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { HourlyForecast } from "@/lib/types";
 import { computeScore, buildTags, fmtLabel } from "@/lib/outdoor-score";
 import { WeatherIcon } from "@/lib/weather-icons";
@@ -84,10 +85,11 @@ function StatCell({ icon, label, value }: { icon: React.ReactNode; label: string
 interface HourlyDetailSheetProps {
   slot: HourlyForecast | null;
   pm25: number;
+  pm10: number;
   onClose: () => void;
 }
 
-export default function HourlyDetailSheet({ slot, pm25, onClose }: HourlyDetailSheetProps) {
+export default function HourlyDetailSheet({ slot, pm25, pm10, onClose }: HourlyDetailSheetProps) {
   const [animState, setAnimState] = useState<"hidden" | "entering" | "open" | "exiting">("hidden");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -122,8 +124,9 @@ export default function HourlyDetailSheet({ slot, pm25, onClose }: HourlyDetailS
 
   if (animState === "hidden" || !slot) return null;
 
-  const score = computeScore(slot, pm25);
-  const tags  = buildTags(slot, score, pm25);
+  const detail = computeScore(slot, pm25, pm10);
+  const score  = detail.overall;
+  const tags   = buildTags(slot, detail);
   const label = fmtLabel(slot.dt);
 
   const isOpen    = animState === "open";
@@ -144,7 +147,7 @@ export default function HourlyDetailSheet({ slot, pm25, onClose }: HourlyDetailS
       : "transform 380ms cubic-bezier(0.16, 1, 0.3, 1)",
   };
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-end justify-center"
       onClick={handleBackdropClick}
@@ -226,7 +229,7 @@ export default function HourlyDetailSheet({ slot, pm25, onClose }: HourlyDetailS
               <div className="flex flex-col gap-1.5">
                 <Stars score={score} size="lg" />
                 <span className="text-xs text-[var(--color-text-sub)] tabular-nums">
-                  {score} / 5.0 · 강수·하늘·온도·공기 종합
+                  {score} / 5.0 · 온도·습도·공기·강수 계절별 종합
                 </span>
               </div>
             </div>
@@ -240,6 +243,7 @@ export default function HourlyDetailSheet({ slot, pm25, onClose }: HourlyDetailS
 
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

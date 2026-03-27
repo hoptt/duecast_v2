@@ -2,11 +2,12 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { TabId, Coordinates, LocationSearchResult, UserSettings, DefaultLocationData } from "@/lib/types";
 import { DEFAULT_SETTINGS, applyTheme } from "@/lib/settings";
-import { MOCK_CITIES, DEFAULT_CITY_ID } from "@/lib/mock-cities";
+import { CITIES, DEFAULT_CITY_ID } from "@/lib/cities";
 
 interface AppState {
   // ── Navigation ──
   activeTab: TabId;
+  previousTab: TabId;
   setActiveTab: (tab: TabId) => void;
 
   // ── Location ──
@@ -39,12 +40,13 @@ export const useAppStore = create<AppState>()(
     (set) => ({
       // Navigation
       activeTab: "today",
-      setActiveTab: (tab) => set({ activeTab: tab }),
+      previousTab: "today",
+      setActiveTab: (tab) => set((state) => ({ activeTab: tab, previousTab: state.activeTab })),
 
       // Location
       selectedCityId: DEFAULT_CITY_ID,
       locationOverride: (() => {
-        const city = MOCK_CITIES.find((c) => c.id === DEFAULT_CITY_ID);
+        const city = CITIES.find((c) => c.id === DEFAULT_CITY_ID);
         return city ? { name: city.address, coords: city.coords } : null;
       })(),
       isMapSelection: false,
@@ -53,7 +55,7 @@ export const useAppStore = create<AppState>()(
       mapFlyTarget: null,
 
       selectCity: (cityId) => {
-        const city = MOCK_CITIES.find((c) => c.id === cityId);
+        const city = CITIES.find((c) => c.id === cityId);
         set({
           selectedCityId: cityId,
           locationOverride: city ? { name: city.address, coords: city.coords } : null,
@@ -64,13 +66,14 @@ export const useAppStore = create<AppState>()(
       },
 
       selectDistrict: (result) =>
-        set({
+        set((state) => ({
           selectedCityId: result.parentCity,
           locationOverride: { name: result.fullName, coords: result.coords },
           isMapSelection: false,
           mapClickedCoords: null,
+          previousTab: state.activeTab,
           activeTab: "today",
-        }),
+        })),
 
       selectMapLocation: (cityId, coords, name) =>
         set({
@@ -126,18 +129,15 @@ export const useAppStore = create<AppState>()(
   )
 );
 
-// ── 파생 데이터 훅 ──
+// ── API 연동용 셀렉터 ──
 
-export function useWeatherData() {
-  const selectedCityId = useAppStore((s) => s.selectedCityId);
-  return (
-    MOCK_CITIES.find((c) => c.id === selectedCityId)?.weather ?? MOCK_CITIES[0].weather
-  );
+/** 현재 선택된 위치의 좌표 (locationOverride 기반) */
+export function useSelectedCoords(): import("@/lib/types").Coordinates | null {
+  const locationOverride = useAppStore((s) => s.locationOverride);
+  return locationOverride?.coords ?? null;
 }
 
-export function useDisplayLocation() {
-  const locationOverride = useAppStore((s) => s.locationOverride);
-  const weather = useWeatherData();
-  if (locationOverride) return { name: locationOverride.name, country: "KR" };
-  return weather.location;
+/** 현재 선택된 도시 ID (Mock 폴백에서 사용) */
+export function useSelectedCityId(): string {
+  return useAppStore((s) => s.selectedCityId);
 }

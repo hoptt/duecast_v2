@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { MapPin, Map, Hand, Star } from "lucide-react";
 import "leaflet/dist/leaflet.css";
-import type { CityWeatherData } from "@/lib/mock-cities";
-import { MOCK_CITIES } from "@/lib/mock-cities";
+import type { CityData } from "@/lib/cities";
+import { CITIES } from "@/lib/cities";
 import type { Map as LeafletMapType, Marker, LeafletMouseEvent } from "leaflet";
 import { reverseGeocode } from "@/lib/geocoding";
-import { useAppStore } from "@/lib/store";
+import { useAppStore, useSelectedCoords, useSelectedCityId } from "@/lib/store";
+import { useWeather } from "@/hooks/useWeather";
 
 function haversineDistance(
   lat1: number,
@@ -29,8 +30,8 @@ function haversineDistance(
 function findNearestCity(
   lat: number,
   lng: number,
-  cities: CityWeatherData[]
-): CityWeatherData {
+  cities: CityData[]
+): CityData {
   return cities.reduce((nearest, city) => {
     const d = haversineDistance(lat, lng, city.coords.lat, city.coords.lon);
     const dNearest = haversineDistance(
@@ -58,7 +59,7 @@ export default function LeafletMap() {
   const setDefaultLocation = useAppStore((s) => s.setDefaultLocation);
 
   const initialCenter = mapClickedCoords
-    ?? MOCK_CITIES.find((c) => c.id === selectedCityId)?.coords;
+    ?? CITIES.find((c) => c.id === selectedCityId)?.coords;
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMapType | null>(null);
@@ -68,7 +69,11 @@ export default function LeafletMap() {
   isMapSelectionRef.current = isMapSelectionStore;
   locationOverrideRef.current = locationOverrideStore;
 
-  const [selectedCity, setSelectedCity] = useState<CityWeatherData | null>(null);
+  const storeCoords = useSelectedCoords();
+  const cityId = useSelectedCityId();
+  const { data: pointWeather } = useWeather(storeCoords, cityId);
+
+  const [selectedCity, setSelectedCity] = useState<CityData | null>(null);
   const [address, setAddress] = useState<string | null>(null);
   const [addressLoading, setAddressLoading] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -76,7 +81,7 @@ export default function LeafletMap() {
   const handleMapClick = useCallback(
     (e: LeafletMouseEvent) => {
       const { lat, lng } = e.latlng;
-      const nearest = findNearestCity(lat, lng, MOCK_CITIES);
+      const nearest = findNearestCity(lat, lng, CITIES);
 
       if (markerRef.current) {
         markerRef.current.remove();
@@ -99,6 +104,12 @@ export default function LeafletMap() {
       setSelectedCity(nearest);
       // 즉시 도시명으로 오늘 탭 업데이트
       selectMapLocation(nearest.id, { lat, lon: lng }, nearest.name);
+
+      // 카드 렌더 후 위치탭 최하단으로 스크롤
+      setTimeout(() => {
+        mapContainerRef.current?.closest("[class*='overflow-y']")
+          ?.scrollTo({ top: 999999, behavior: "smooth" });
+      }, 100);
 
       abortControllerRef.current?.abort();
       const controller = new AbortController();
@@ -132,7 +143,7 @@ export default function LeafletMap() {
         fillOpacity: 0.9,
       }).addTo(mapRef.current);
       markerRef.current = marker as unknown as Marker;
-      const nearest = findNearestCity(lat, lon, MOCK_CITIES);
+      const nearest = findNearestCity(lat, lon, CITIES);
       setSelectedCity(nearest);
       setAddress(nearest.address ?? null);
       setAddressLoading(false);
@@ -190,7 +201,7 @@ export default function LeafletMap() {
         }).addTo(map);
         markerRef.current = marker as unknown as Marker;
 
-        const nearest = findNearestCity(lat, lon, MOCK_CITIES);
+        const nearest = findNearestCity(lat, lon, CITIES);
         setSelectedCity(nearest);
 
         // 이전 탭 전환으로 리마운트된 경우 저장된 상태 복원
@@ -227,7 +238,7 @@ export default function LeafletMap() {
 
 
   return (
-    <div className="mt-5 mb-3">
+    <div>
       <p className="text-xs font-semibold tracking-[0.08em] uppercase text-[var(--color-text-sub)] mb-3">
         지도 탐색
       </p>
@@ -290,28 +301,28 @@ export default function LeafletMap() {
                 aria-hidden="true"
               />
               <div className="flex flex-col flex-1">
-                <span className="text-sm font-semibold text-[var(--color-text-main)]">
-                  {selectedCity.name}
-                </span>
                 {addressLoading && (
-                  <span className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                  <span className="text-sm font-semibold text-[var(--color-text-muted)]">
                     주소 확인 중...
                   </span>
                 )}
                 {!addressLoading && address && (
-                  <span className="text-xs text-[var(--color-text-muted)] mt-0.5">
-                    {address}
+                  <span className="relative max-w-fit">
+                    <span className="absolute -bottom-[-1px] left-0 w-full h-0.5 bg-[var(--color-primary)] rounded-full" />
+                    <span className="text-sm font-semibold leading-tight text-[var(--color-primary)]">
+                      {address}
+                    </span>
                   </span>
                 )}
                 <span className="text-xs text-[var(--color-text-muted)] mt-0.5">
-                  {selectedCity.weather.current.weather.description}
+                  {pointWeather?.current.weather.description ?? "날씨 확인 중..."}
                 </span>
               </div>
               <span
                 className="text-lg text-[var(--color-text-main)] mb-auto"
                 style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}
               >
-                {selectedCity.weather.current.temp}°
+                {pointWeather != null ? `${pointWeather.current.temp}°` : "--°"}
               </span>
             </div>
 

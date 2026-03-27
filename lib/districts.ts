@@ -1,10 +1,10 @@
 import type { LocationSearchResult } from "./types";
 
 /**
- * 구/동 단위 상세 지역 mock 데이터
- * parentCity: MOCK_CITIES의 id 참조
+ * 구/동 단위 상세 지역 데이터
+ * parentCity: CITIES의 id 참조
  */
-export const MOCK_DISTRICTS: LocationSearchResult[] = [
+export const DISTRICTS: LocationSearchResult[] = [
   // ── 서울 25개 구 ──────────────────────────────────────────────
   { id: "seoul-jongno",     name: "종로구",   fullName: "서울특별시 종로구",   parentCity: "seoul",     coords: { lat: 37.5730, lon: 126.9794 }, type: "district" },
   { id: "seoul-jung",       name: "중구",     fullName: "서울특별시 중구",     parentCity: "seoul",     coords: { lat: 37.5636, lon: 126.9976 }, type: "district" },

@@ -28,6 +28,8 @@ export interface CurrentWeather {
   humidity: number;     // 습도 (%)
   windSpeed: number;    // 풍속 (m/s)
   weather: WeatherInfo;
+  observedAt: number;      // OWM dt: 관측 시각 Unix timestamp (UTC)
+  timezoneOffset: number;  // OWM timezone: UTC 오프셋 (초)
 }
 
 // ===== 시간별 예보 =====
@@ -36,6 +38,8 @@ export interface HourlyForecast {
   dt: number;           // Unix timestamp
   time: string;         // "HH시" 형식
   temp: number;         // 기온 (°C, 정수 반올림)
+  feelsLike: number;    // 체감 온도 (°C, 정수 반올림)
+  humidity: number;     // 습도 (%)
   pop: number;          // 강수확률 (0-100, 퍼센트)
   weather: WeatherInfo;
 }
@@ -94,6 +98,14 @@ export interface Coordinates {
 
 export interface CityOption extends Coordinates {
   name: string;
+}
+
+/** 위치 탭 도시 카드용 간략한 날씨 프리뷰 */
+export interface CityWeatherPreview {
+  cityId: string;
+  temp: number;              // °C 정수
+  description: string;       // 한국어 날씨 설명
+  condition: WeatherCondition; // 아이콘 매핑용
 }
 
 // ===== 일출/일몰 =====
@@ -175,7 +187,7 @@ export interface LocationSearchResult {
   id: string;
   name: string;        // 표시명 (예: "종로구", "강남역")
   fullName: string;    // 전체명 (예: "서울특별시 종로구")
-  parentCity: string;  // MOCK_CITIES의 id (예: "seoul")
+  parentCity: string;  // CITIES의 id (예: "seoul")
   coords: Coordinates;
   type: "city" | "district" | "neighborhood";
 }

@@ -1,7 +1,7 @@
 import type { UserSettings, ThemeMode } from "@/lib/types";
 
 export const DEFAULT_SETTINGS: UserSettings = {
-  themeMode: "light",
+  themeMode: "dark",
   temperatureUnit: "celsius",
   windSpeedUnit: "ms",
   showFeelsLike: true,

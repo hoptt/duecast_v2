@@ -21,7 +21,7 @@ function GuideRow({ item, showDivider = true }: GuideRowProps) {
         </div>
 
         {/* 가이드 메시지 */}
-        <p className="text-sm text-[var(--color-text-main)] leading-snug flex-1">
+        <p className="text-sm text-[var(--color-text-main)] leading-snug flex-1 break-keep">
           {item.message}
         </p>
       </div>

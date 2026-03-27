@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { Geist_Mono } from "next/font/google";
+import Providers from "@/components/Providers";
+import DesktopSidebarLayout from "@/components/DesktopSidebarLayout";
 import "./globals.css";
 
 /**
@@ -56,11 +58,15 @@ export default function RootLayout({
         {/* 테마 FOUC 방지: 첫 페인트 전에 localStorage에서 테마를 읽어 data-theme 설정 */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var r=localStorage.getItem('duecast-settings');if(r){var p=JSON.parse(r);var m=p&&p.state&&p.state.settings&&p.state.settings.themeMode;if(m==='dark'||m==='light')document.documentElement.setAttribute('data-theme',m);}}catch(e){}}())`,
+            __html: `(function(){try{if(location.search.indexOf('app=true')!==-1){document.documentElement.setAttribute('data-env','app');}var r=localStorage.getItem('duecast-settings');if(r){var p=JSON.parse(r);var m=p&&p.state&&p.state.settings&&p.state.settings.themeMode;if(m==='dark'||m==='light')document.documentElement.setAttribute('data-theme',m);}else{document.documentElement.setAttribute('data-theme','dark');}}catch(e){}}())`,
           }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <Providers>
+          <DesktopSidebarLayout>{children}</DesktopSidebarLayout>
+        </Providers>
+      </body>
     </html>
   );
 }

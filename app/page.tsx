@@ -12,8 +12,15 @@ import WeatherScoreCard from "@/components/WeatherScoreCard";
 import OutdoorTimingCard from "@/components/OutdoorTimingCard";
 import LocationTab from "@/components/LocationTab";
 import SettingsTab from "@/components/SettingsTab";
-import { useState } from "react";
-import { useAppStore, useWeatherData, useDisplayLocation } from "@/lib/store";
+import { useState, useRef } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { tabSlideVariants, reducedMotionVariants, initialLoadVariants, GPU_STYLE, getSlideDirection } from "@/lib/motion";
+import { useAppStore, useSelectedCoords, useSelectedCityId } from "@/lib/store";
+import { useGeolocation } from "@/hooks/useGeolocation";
+import { useWeather } from "@/hooks/useWeather";
+import { useCityWeathers } from "@/hooks/useCityWeathers";
+import LoadingSkeleton from "@/components/LoadingSkeleton";
+import ErrorState from "@/components/ErrorState";
 
 type NavTab = { id: TabId; label: string; icon: React.ReactNode; disabled: boolean };
 
@@ -23,8 +30,6 @@ const NAV_TABS: NavTab[] = [
   { id: "location", label: "위치", icon: <MapPin size={20} />,   disabled: false },
   { id: "settings", label: "설정", icon: <Settings size={20} />, disabled: false },
 ];
-
-// Sprint 3: useGeolocation + useWeather 훅으로 교체 예정
 
 const WEATHER_BG: Record<string, string> = {
   Clear:        "weather-bg-clear",
@@ -46,16 +51,46 @@ const GRAIN_BG =
 
 export default function Home() {
   const activeTab = useAppStore((s) => s.activeTab);
+  const previousTab = useAppStore((s) => s.previousTab);
   const setActiveTab = useAppStore((s) => s.setActiveTab);
+  const shouldReduceMotion = useReducedMotion();
+  const direction = getSlideDirection(previousTab, activeTab);
+  const isInitialLoad = previousTab === activeTab;
+  const slideVariants = shouldReduceMotion
+    ? reducedMotionVariants
+    : isInitialLoad
+      ? initialLoadVariants
+      : tabSlideVariants;
   const isHydrated = useAppStore((s) => s.isHydrated);
+  const refreshInterval = useAppStore((s) => s.settings.refreshInterval);
+  const locationOverride = useAppStore((s) => s.locationOverride);
   const [splashDone, setSplashDone] = useState(false);
-  const weatherData = useWeatherData();
-  const displayLocation = useDisplayLocation();
 
-  const bgClass = WEATHER_BG[weatherData.current.weather.main] ?? "weather-bg-clear";
+  // 위치: 스토어 선택 좌표 우선, 없으면 브라우저 Geolocation
+  const storeCoords = useSelectedCoords();
+  const cityId = useSelectedCityId();
+  const { coords: geoCoords } = useGeolocation();
+  const coords = storeCoords ?? geoCoords;
+
+  // 스플래시 중 도시 날씨 캐시 워밍
+  useCityWeathers();
+
+  // 날씨 데이터 (API)
+  const { data: weatherData, loading: weatherLoading, error: weatherError, refetch } =
+    useWeather(coords, cityId, refreshInterval);
+
+  // 표시 위치명: locationOverride → API location → 기본값
+  const displayLocation = locationOverride
+    ? { name: locationOverride.name, country: "KR" }
+    : weatherData?.location ?? { name: "서울특별시", country: "KR" };
+
+  const bgClass = WEATHER_BG[weatherData?.current.weather.main ?? ""] ?? "weather-bg-clear";
+  const bgRef = useRef(bgClass);
+  if (weatherData) bgRef.current = bgClass;
+  const safeBgClass = bgRef.current;
 
   return (
-    <div className={`weather-bg ${bgClass} min-h-dvh relative w-full max-w-[480px] mx-auto`} data-weather={weatherData.current.weather.main.toLowerCase()}>
+    <div className={`weather-bg ${safeBgClass} min-h-dvh relative w-full max-w-[480px] mx-auto`} data-weather={(weatherData?.current.weather.main ?? "clear").toLowerCase()}>
 
       {/* 대기 grain 오버레이 */}
       <div
@@ -73,7 +108,7 @@ export default function Home() {
         className={[
           "relative z-10 flex flex-col flex-1",
           "w-full",
-          "min-h-dvh",
+          "h-dvh overflow-hidden",
         ].join(" ")}
       >
         {/* 스플래시 화면 */}
@@ -86,48 +121,104 @@ export default function Home() {
 
         {/* 탭 컨텐츠 — 스플래시 종료 후 렌더 */}
         {splashDone && (
-          <>
+          <AnimatePresence mode="wait" custom={direction}>
             {/* 오늘 탭 */}
             {activeTab === "today" && (
-              <div className="flex flex-col flex-1" style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}>
-                <div className="flex flex-col flex-1 gap-3">
-                  <LocationHeader location={displayLocation} onLocationClick={() => setActiveTab("location")} />
-                  <WeatherMain weather={weatherData.current} />
-                  <ActionGuide guide={weatherData.guide} />
-                  <HourlyTimeline forecast={weatherData.forecast} pm25={weatherData.airPollution.pm25} />
-                  <div className="grid grid-cols-2 gap-3 px-4">
-                    <SunriseSunsetCard sun={weatherData.sun} />
-                    <WeatherScoreCard
-                      temp={weatherData.current.temp}
-                      humidity={weatherData.current.humidity}
-                      pm25={weatherData.airPollution.pm25}
-                      maxPop={Math.max(...weatherData.forecast.slice(0, 8).map((f) => f.pop))}
-                    />
+              <motion.div
+                key="today"
+                custom={direction}
+                variants={slideVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                style={GPU_STYLE}
+                className="flex flex-col h-dvh overflow-y-auto"
+              >
+                {/* 로딩 중 (데이터 없음) */}
+                {weatherLoading && !weatherData && <LoadingSkeleton />}
+
+                {/* 에러 (데이터 없음) */}
+                {weatherError && !weatherData && (
+                  <ErrorState message={weatherError} onRetry={refetch} />
+                )}
+
+                {/* 날씨 데이터 표시 */}
+                {weatherData && (
+                  <div className="flex flex-col flex-1" style={{ paddingBottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))" }}>
+                    <div className="flex flex-col flex-1 gap-3">
+                      <LocationHeader
+                        location={displayLocation}
+                        observedAt={weatherData.current.observedAt}
+                        timezoneOffset={weatherData.current.timezoneOffset}
+                        onLocationClick={() => setActiveTab("location")}
+                      />
+                      <WeatherMain weather={weatherData.current} />
+                      <ActionGuide guide={weatherData.guide} />
+                      <HourlyTimeline forecast={weatherData.forecast} pm25={weatherData.airPollution.pm25} pm10={weatherData.airPollution.pm10} />
+                      <div className="grid grid-cols-2 gap-3 px-4">
+                        <SunriseSunsetCard sun={weatherData.sun} />
+                        <WeatherScoreCard
+                          temp={weatherData.current.temp}
+                          feelsLike={weatherData.current.feelsLike}
+                          humidity={weatherData.current.humidity}
+                          pm25={weatherData.airPollution.pm25}
+                          pm10={weatherData.airPollution.pm10}
+                          maxPop={Math.max(...weatherData.forecast.slice(0, 8).map((f) => f.pop))}
+                        />
+                      </div>
+                      <div className="px-4">
+                        <OutdoorTimingCard
+                          forecast={weatherData.forecast}
+                          pm25={weatherData.airPollution.pm25}
+                          pm10={weatherData.airPollution.pm10}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="px-4">
-                    <OutdoorTimingCard
-                      forecast={weatherData.forecast}
-                      pm25={weatherData.airPollution.pm25}
-                    />
-                  </div>
-                </div>
-              </div>
+                )}
+              </motion.div>
             )}
 
             {/* 위치 탭 */}
-            {activeTab === "location" && <LocationTab />}
+            {activeTab === "location" && (
+              <motion.div
+                key="location"
+                custom={direction}
+                variants={slideVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                style={GPU_STYLE}
+                className="flex flex-col h-dvh overflow-y-auto"
+              >
+                <LocationTab />
+              </motion.div>
+            )}
 
             {/* 설정 탭 */}
-            {activeTab === "settings" && <SettingsTab />}
-          </>
+            {activeTab === "settings" && (
+              <motion.div
+                key="settings"
+                custom={direction}
+                variants={slideVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                style={GPU_STYLE}
+                className="flex flex-col h-dvh overflow-y-auto"
+              >
+                <SettingsTab />
+              </motion.div>
+            )}
+          </AnimatePresence>
         )}
 
         {/* 하단 탭 바 — 스플래시 종료 후 노출 */}
         {splashDone && <nav
           aria-label="하단 탭 내비게이션"
-          className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50 safe-bottom neu-raised rounded-none rounded-t-[var(--radius-card)]"
+          className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50 safe-bottom bg-[var(--neu-bg)] rounded-t-xl rounded-b-none"
         >
-          <div className="flex items-center justify-around h-14">
+          <div className="flex items-center justify-around h-18 px-4">
             {NAV_TABS.map((tab) => (
               <button
                 key={tab.id}
@@ -136,10 +227,10 @@ export default function Home() {
                 aria-label={tab.label}
                 aria-current={activeTab === tab.id ? "page" : undefined}
                 className={[
-                  "flex flex-col items-center justify-center gap-0.5 flex-1 h-full min-h-11 min-w-11 rounded-xl focus-visible:outline-none",
+                  "flex flex-col items-center justify-center gap-0.5 w-14 h-14 rounded-2xl focus-visible:outline-none",
                   "transition-[color,box-shadow,background] duration-150",
                   "disabled:opacity-40 disabled:cursor-not-allowed",
-                  activeTab === tab.id ? "neu-pressed" : "",
+                  activeTab === tab.id ? "neu-pressed" : "neu-button",
                 ].join(" ")}
                 style={{
                   color: activeTab === tab.id
@@ -149,7 +240,6 @@ export default function Home() {
                   WebkitAppearance: "none",
                   outline: "none",
                   WebkitTapHighlightColor: "transparent",
-                  border: "1px solid transparent",
                 }}
               >
                 <span className="leading-none">{tab.icon}</span>

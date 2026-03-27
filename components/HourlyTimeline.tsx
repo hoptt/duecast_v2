@@ -9,6 +9,7 @@ import HourlyDetailSheet from "@/components/HourlyDetailSheet";
 interface HourlyTimelineProps {
   forecast: HourlyForecast[];
   pm25: number;
+  pm10: number;
   className?: string;
 }
 
@@ -16,9 +17,9 @@ interface HourlyTimelineProps {
  * HourlyTimeline — 클라이언트 컴포넌트
  * 6개 시간별 슬롯을 균등 배치로 표시. 슬롯 클릭 시 바텀시트 열림.
  */
-export default function HourlyTimeline({ forecast, pm25, className = "mx-4" }: HourlyTimelineProps) {
+export default function HourlyTimeline({ forecast, pm25, pm10, className = "mx-4" }: HourlyTimelineProps) {
   const [selectedSlot, setSelectedSlot] = useState<HourlyForecast | null>(null);
-  const slots = forecast.slice(0, 6);
+  const slots = forecast;
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const dragState = useRef({ isDragging: false, startX: 0, scrollLeft: 0, moved: false });
@@ -102,6 +103,7 @@ export default function HourlyTimeline({ forecast, pm25, className = "mx-4" }: H
       <HourlyDetailSheet
         slot={selectedSlot}
         pm25={pm25}
+        pm10={pm10}
         onClose={() => setSelectedSlot(null)}
       />
     </>

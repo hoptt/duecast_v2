@@ -1,4 +1,4 @@
-import { MOCK_DISTRICTS } from "./mock-districts";
+import { DISTRICTS } from "./districts";
 import type { LocationSearchResult } from "./types";
 
 /**
@@ -8,7 +8,7 @@ import type { LocationSearchResult } from "./types";
 export function searchLocations(query: string): LocationSearchResult[] {
   const q = query.trim();
   if (!q) return [];
-  return MOCK_DISTRICTS.filter(
+  return DISTRICTS.filter(
     (d) => d.name.includes(q) || d.fullName.includes(q)
   );
 }

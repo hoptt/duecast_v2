@@ -71,4 +71,4 @@ duecast_v2/
 
 - **Sprint 1** ✅ — 프로젝트 셋업, 디자인 시스템 구축
 - **Sprint 2** ✅ — Mock 데이터 기반 전체 UI 구현
-- **Sprint 3** (예정) — GPS 위치 연동 + OpenWeatherMap 실시간 API 연동
+- **Sprint 3** ✅ - GPS 위치 연동 + OpenWeatherMap 실시간 API 연동

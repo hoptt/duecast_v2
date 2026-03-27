@@ -1,26 +1,37 @@
 "use client";
 
-import { useCurrentTime } from "@/hooks/useCurrentTime";
 import type { Location } from "@/lib/types";
 import { MapPin } from "lucide-react";
 
 interface LocationHeaderProps {
   location: Location;
+  observedAt?: number;
+  timezoneOffset?: number;
   onLocationClick?: () => void;
+}
+
+/** 관측 시각을 3시간 슬롯으로 내림하여 "15시 기준" 형태로 반환 */
+function formatObservedSlot(dt: number, tzOffset: number): string {
+  const localMs = (dt + tzOffset) * 1000;
+  const h = new Date(localMs).getUTCHours();
+  const slot = Math.floor(h / 3) * 3;
+  return `${slot}시 기준`;
 }
 
 /**
  * LocationHeader — 클라이언트 컴포넌트
- * 위치명(좌측) + 현재 시각(우측) 헤더.
- * useCurrentTime 훅으로 1분마다 시각 갱신.
+ * 위치명(좌측) + 관측 데이터 시간대(우측) 헤더.
  */
-export default function LocationHeader({ location, onLocationClick }: LocationHeaderProps) {
-  const { timeString } = useCurrentTime();
+export default function LocationHeader({ location, observedAt, timezoneOffset, onLocationClick }: LocationHeaderProps) {
+  const slotLabel =
+    observedAt != null && timezoneOffset != null
+      ? formatObservedSlot(observedAt, timezoneOffset)
+      : null;
 
   return (
     <header
-      aria-label="위치 및 현재 시각"
-      className="flex items-center justify-between px-5 pb-2"
+      aria-label="위치 및 데이터 기준 시각"
+      className="flex items-center justify-between px-4 pb-2"
       style={{ paddingTop: "1rem" }}
     >
       {/* 위치명 */}
@@ -36,13 +47,15 @@ export default function LocationHeader({ location, onLocationClick }: LocationHe
         </span>
       </button>
 
-      {/* 현재 시각 */}
-      <time
-        aria-label={`현재 시각 ${timeString}`}
-        className="text-xs text-[var(--color-text-sub)] tabular-nums"
-      >
-        {timeString}
-      </time>
+      {/* 관측 데이터 시간대 */}
+      {slotLabel && (
+        <time
+          aria-label={`관측 데이터 ${slotLabel}`}
+          className="text-xs text-[var(--color-text-sub)] tabular-nums"
+        >
+          {slotLabel}
+        </time>
+      )}
     </header>
   );
 }

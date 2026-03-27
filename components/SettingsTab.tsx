@@ -119,13 +119,14 @@ function SegmentedControl<T extends string | number>({
 
 interface SectionCardProps {
   title: string;
+  isLast?: boolean;
   children: React.ReactNode;
 }
 
-function SectionCard({ title, children }: SectionCardProps) {
+function SectionCard({ title, isLast = false, children }: SectionCardProps) {
   return (
     <div
-      className="neu-raised p-4 mb-3"
+      className={`neu-raised p-4${isLast ? "" : " mb-3"}`}
     >
       <p className="text-xs font-semibold tracking-[0.08em] uppercase text-[var(--color-text-sub)] mb-3">
         {title}
@@ -237,7 +238,7 @@ export default function SettingsTab() {
   }
 
   return (
-    <div className="flex flex-col flex-1 px-4" style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}>
+    <div className="flex flex-col flex-1 px-4" style={{ paddingBottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))" }}>
       {/* 헤더 */}
       <header className="pt-4 pb-4">
         <h1 className="text-sm font-semibold text-[var(--color-text-main)] tracking-wide flex items-center gap-1.5">
@@ -276,7 +277,7 @@ export default function SettingsTab() {
       </SectionCard>
 
       {/* 섹션 3: 앱 정보 */}
-      <SectionCard title="앱 정보">
+      <SectionCard title="앱 정보" isLast>
         <InfoRow label="버전" value="0.1.0" />
         <InfoRow label="데이터 제공" value="OpenWeatherMap API" />
         <InfoRow
