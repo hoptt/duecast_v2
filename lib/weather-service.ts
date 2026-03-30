@@ -59,21 +59,30 @@ function transformCurrent(raw: OWMCurrentResponse): CurrentWeather {
   };
 }
 
-function transformForecast(raw: OWMForecastResponse): HourlyForecast[] {
+function transformForecast(raw: OWMForecastResponse, airForecast: OWMAirPollutionResponse): HourlyForecast[] {
   const tz = raw.city.timezone;
-  return raw.list.map((item) => ({
-    dt: item.dt,
-    time: formatLocalHour(item.dt, tz),
-    temp: Math.round(item.main.temp),
-    feelsLike: Math.round(item.main.feels_like),
-    humidity: item.main.humidity,
-    pop: Math.round(item.pop * 100), // 0.32 → 32
-    weather: {
-      main: toWeatherCondition(item.weather[0]?.main ?? "Clouds"),
-      description: getWeatherDescriptionKr(item.weather[0]?.id ?? 800, item.weather[0]?.description ?? ""),
-      icon: item.weather[0]?.icon ?? "01d",
-    },
-  }));
+  // dt → {pm25, pm10} Map으로 O(1) 조회
+  const airMap = new Map(
+    airForecast.list.map((a) => [a.dt, { pm25: a.components.pm2_5, pm10: a.components.pm10 }])
+  );
+  return raw.list.map((item) => {
+    const air = airMap.get(item.dt)!;
+    return {
+      dt: item.dt,
+      time: formatLocalHour(item.dt, tz),
+      temp: Math.round(item.main.temp),
+      feelsLike: Math.round(item.main.feels_like),
+      humidity: item.main.humidity,
+      pop: Math.round(item.pop * 100), // 0.32 → 32
+      weather: {
+        main: toWeatherCondition(item.weather[0]?.main ?? "Clouds"),
+        description: getWeatherDescriptionKr(item.weather[0]?.id ?? 800, item.weather[0]?.description ?? ""),
+        icon: item.weather[0]?.icon ?? "01d",
+      },
+      pm25: air.pm25,
+      pm10: air.pm10,
+    };
+  });
 }
 
 function transformAirPollution(raw: OWMAirPollutionResponse): AirPollution {
@@ -146,14 +155,15 @@ export async function fetchWeatherData(
 
   const fetchOpts = { next: { revalidate: 600 } } as const;
 
-  const [currentRes, forecastRes, airRes] = await Promise.all([
+  const [currentRes, forecastRes, airRes, airForecastRes] = await Promise.all([
     fetch(`${OWM_BASE}/weather?${params}`, fetchOpts),
     fetch(`${OWM_BASE}/forecast?${forecastParams}`, fetchOpts),
     fetch(`${OWM_BASE}/air_pollution?${params}`, fetchOpts),
+    fetch(`${OWM_BASE}/air_pollution/forecast?${params}`, fetchOpts),
   ]);
 
   // 에러 체크 — 상태 코드별 분류
-  for (const res of [currentRes, forecastRes, airRes]) {
+  for (const res of [currentRes, forecastRes, airRes, airForecastRes]) {
     if (!res.ok) {
       const status = res.status;
       if (status === 401) throw Object.assign(new Error("API 키가 유효하지 않습니다."), { code: 401 });
@@ -163,14 +173,15 @@ export async function fetchWeatherData(
     }
   }
 
-  const [currentRaw, forecastRaw, airRaw] = await Promise.all([
+  const [currentRaw, forecastRaw, airRaw, airForecastRaw] = await Promise.all([
     currentRes.json() as Promise<OWMCurrentResponse>,
     forecastRes.json() as Promise<OWMForecastResponse>,
     airRes.json() as Promise<OWMAirPollutionResponse>,
+    airForecastRes.json() as Promise<OWMAirPollutionResponse>,
   ]);
 
   const current = transformCurrent(currentRaw);
-  const forecast = transformForecast(forecastRaw);
+  const forecast = transformForecast(forecastRaw, airForecastRaw);
   const airPollution = transformAirPollution(airRaw);
   const sun = extractSunInfo(currentRaw);
   const dailyTemp = extractDailyTemp(currentRaw, forecastRaw);

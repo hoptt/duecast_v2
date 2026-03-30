@@ -8,12 +8,10 @@ import { Star, ChevronUp, ChevronDown } from "lucide-react";
 // ── 점수 상위 N개 추출 ─────────────────────────────────────────────────────
 function getTopSlots(
   forecast: HourlyForecast[],
-  pm25: number,
-  pm10: number,
   count = 3
 ): Array<{ item: HourlyForecast; detail: ScoreDetail }> {
   return forecast
-    .map((item) => ({ item, detail: computeScore(item, pm25, pm10) }))
+    .map((item) => ({ item, detail: computeScore(item) }))
     .sort((a, b) => b.detail.overall - a.detail.overall)
     .slice(0, count)
     .sort((a, b) => a.item.dt - b.item.dt);
@@ -61,15 +59,13 @@ function TagChip({ label, variant }: Tag) {
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────
 interface OutdoorTimingCardProps {
   forecast: HourlyForecast[];
-  pm25: number;
-  pm10: number;
 }
 
-export default function OutdoorTimingCard({ forecast, pm25, pm10 }: OutdoorTimingCardProps) {
+export default function OutdoorTimingCard({ forecast }: OutdoorTimingCardProps) {
   const [expanded, setExpanded] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const topSlots = getTopSlots(forecast, pm25, pm10, 3);
+  const topSlots = getTopSlots(forecast, 3);
   const topDts = new Set(topSlots.map((s) => s.item.dt));
 
   return (
@@ -141,7 +137,7 @@ export default function OutdoorTimingCard({ forecast, pm25, pm10 }: OutdoorTimin
       >
         <div ref={contentRef} className="flex flex-col mt-2">
           {forecast.map((item, idx) => {
-            const detail = computeScore(item, pm25, pm10);
+            const detail = computeScore(item);
             const tags   = buildTags(item, detail);
             const isTop  = topDts.has(item.dt);
 

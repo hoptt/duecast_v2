@@ -1,6 +1,7 @@
 "use client";
 
 import type { TabId } from "@/lib/types";
+import { currentWeatherToPop } from "@/lib/seasonal-score";
 import { Home as HomeIcon, Calendar, MapPin, Settings } from "lucide-react";
 import SplashScreen from "@/components/SplashScreen";
 import LocationHeader from "@/components/LocationHeader";
@@ -154,7 +155,7 @@ export default function Home() {
                       />
                       <WeatherMain weather={weatherData.current} />
                       <ActionGuide guide={weatherData.guide} />
-                      <HourlyTimeline forecast={weatherData.forecast} pm25={weatherData.airPollution.pm25} pm10={weatherData.airPollution.pm10} />
+                      <HourlyTimeline forecast={weatherData.forecast} />
                       <div className="grid grid-cols-2 gap-3 px-4">
                         <SunriseSunsetCard sun={weatherData.sun} />
                         <WeatherScoreCard
@@ -163,14 +164,12 @@ export default function Home() {
                           humidity={weatherData.current.humidity}
                           pm25={weatherData.airPollution.pm25}
                           pm10={weatherData.airPollution.pm10}
-                          maxPop={Math.max(...weatherData.forecast.slice(0, 8).map((f) => f.pop))}
+                          maxPop={currentWeatherToPop(weatherData.current.weather.main)}
                         />
                       </div>
                       <div className="px-4">
                         <OutdoorTimingCard
                           forecast={weatherData.forecast}
-                          pm25={weatherData.airPollution.pm25}
-                          pm10={weatherData.airPollution.pm10}
                         />
                       </div>
                     </div>

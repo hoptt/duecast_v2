@@ -42,6 +42,8 @@ export interface HourlyForecast {
   humidity: number;     // 습도 (%)
   pop: number;          // 강수확률 (0-100, 퍼센트)
   weather: WeatherInfo;
+  pm25: number;  // PM2.5 (μg/m³) — 시간대별 예보값
+  pm10: number;  // PM10 (μg/m³) — 시간대별 예보값
 }
 
 // ===== 미세먼지 =====

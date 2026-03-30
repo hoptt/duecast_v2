@@ -84,12 +84,10 @@ function StatCell({ icon, label, value }: { icon: React.ReactNode; label: string
 
 interface HourlyDetailSheetProps {
   slot: HourlyForecast | null;
-  pm25: number;
-  pm10: number;
   onClose: () => void;
 }
 
-export default function HourlyDetailSheet({ slot, pm25, pm10, onClose }: HourlyDetailSheetProps) {
+export default function HourlyDetailSheet({ slot, onClose }: HourlyDetailSheetProps) {
   const [animState, setAnimState] = useState<"hidden" | "entering" | "open" | "exiting">("hidden");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -124,7 +122,7 @@ export default function HourlyDetailSheet({ slot, pm25, pm10, onClose }: HourlyD
 
   if (animState === "hidden" || !slot) return null;
 
-  const detail = computeScore(slot, pm25, pm10);
+  const detail = computeScore(slot);
   const score  = detail.overall;
   const tags   = buildTags(slot, detail);
   const label = fmtLabel(slot.dt);

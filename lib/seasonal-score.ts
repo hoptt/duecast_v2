@@ -1,6 +1,8 @@
 // 계절별 날씨 평점 산출 — /weather-scoring 스킬 기반
 // 같은 수치라도 계절에 따라 다른 점수를 부여 (예: 겨울 0°C vs 여름 0°C)
 
+import type { WeatherCondition } from "./types";
+
 export type Season = "spring" | "summer" | "autumn" | "winter";
 export type HumDirection = "dry" | "humid" | "ideal";
 
@@ -135,4 +137,19 @@ export function calculateSeasonalWeatherScore(input: SeasonalScoreInput): Weathe
   const overall   = calcOverall(tempScore, humScore, airScore, rainScore);
 
   return { tempScore, humScore, humDirection, airScore, rainScore, overall, season };
+}
+
+// ── 현재 날씨 상태 → 강수확률 변환 ──────────────────────────
+// "현재 날씨 평점" 카드용: 미래 예보(maxPop) 대신 현재 상태 기반 산출
+export function currentWeatherToPop(main: WeatherCondition): number {
+  switch (main) {
+    case "Thunderstorm": return 100;
+    case "Rain":         return 95;
+    case "Snow":         return 90;
+    case "Drizzle":      return 70;
+    case "Mist":
+    case "Fog":          return 30;
+    case "Clouds":       return 10;
+    default:             return 0;
+  }
 }

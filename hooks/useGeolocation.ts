@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { Coordinates } from "@/lib/types";
+import { isFlutterWebView, requestNativeGPS } from "@/lib/bridge";
 
 const SEOUL_FALLBACK: Coordinates = { lat: 37.5665, lon: 126.9780 };
 
@@ -22,7 +23,25 @@ export function useGeolocation(): UseGeolocationReturn {
   useEffect(() => {
     if (cachedCoords !== null) return;
 
-    // Geolocation 미지원 브라우저
+    // Flutter WebView 환경: 네이티브 GPS 브릿지 사용
+    if (isFlutterWebView()) {
+      requestNativeGPS()
+        .then((coords) => {
+          cachedCoords = coords;
+          setCoords(coords);
+          setLoading(false);
+        })
+        .catch(() => {
+          // 권한 거부 등 — 서울 폴백
+          cachedCoords = SEOUL_FALLBACK;
+          setCoords(SEOUL_FALLBACK);
+          setError("위치 권한이 거부되어 서울로 표시됩니다.");
+          setLoading(false);
+        });
+      return;
+    }
+
+    // 브라우저 환경: 기존 Web Geolocation API 사용
     if (!navigator.geolocation) {
       cachedCoords = SEOUL_FALLBACK;
       setCoords(SEOUL_FALLBACK);

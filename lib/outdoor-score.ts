@@ -30,13 +30,13 @@ const SEASON_TEMP_LABELS: Record<Season, [string, string, string]> = {
   winter: ["포근", "쌀쌀", "꽁꽁"],
 };
 
-export function computeScore(item: HourlyForecast, pm25: number, pm10: number): ScoreDetail {
+export function computeScore(item: HourlyForecast): ScoreDetail {
   const month = new Date(item.dt * 1000).getMonth() + 1;
   const season = getSeason(month);
 
   const tempScore = calcTempScore(item.temp, item.feelsLike, season);
   const { score: humScore, direction: humDirection } = calcHumScore(item.humidity, season);
-  const airScore = calcAirScore(pm25, pm10);
+  const airScore  = calcAirScore(item.pm25, item.pm10);
   const rainScore = calcRainScore(item.pop, season);
 
   // 현재 날씨 평점과 동일한 가중치: 온도 35%, 공기 25%, 강수 25%, 습도 15%
