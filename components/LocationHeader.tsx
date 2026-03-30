@@ -10,11 +10,11 @@ interface LocationHeaderProps {
   onLocationClick?: () => void;
 }
 
-/** 관측 시각을 3시간 슬롯으로 내림하여 "15시 기준" 형태로 반환 */
+/** 관측 시각을 2시간 슬롯으로 내림하여 "18시 기준" 형태로 반환 */
 function formatObservedSlot(dt: number, tzOffset: number): string {
   const localMs = (dt + tzOffset) * 1000;
   const h = new Date(localMs).getUTCHours();
-  const slot = Math.floor(h / 3) * 3;
+  const slot = Math.floor(h / 2) * 2;
   return `${slot}시 기준`;
 }
 

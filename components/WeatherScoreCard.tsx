@@ -11,6 +11,7 @@ interface WeatherScoreCardProps {
   pm25: number;
   pm10: number;
   maxPop: number;
+  weatherDescription: string;
 }
 
 // ── 별 표시 ────────────────────────────────────────────────
@@ -67,23 +68,14 @@ function humLabel(score: number, direction: HumDirection, season: Season): strin
 // 공기: 3단계 고정 라벨
 const AIR_LABELS: [string, string, string] = ["좋음", "보통", "나쁨"];
 
-// 강수: 5단계 (강수 강도를 직접적으로 표현)
-function rainLabel(score: number): string {
-  if (score >= 4.5) return "맑음";
-  if (score >= 3.5) return "이슬";
-  if (score >= 2.5) return "주룩";
-  if (score >= 1.5) return "장대";
-  return "폭우";
-}
-
-function gradeLabel(score: number, metric: MetricType, season: Season, humDirection?: HumDirection): string {
+function gradeLabel(score: number, metric: MetricType, season: Season, humDirection?: HumDirection, weatherDescription?: string): string {
   if (metric === "temp") {
     const labels = SEASON_TEMP_LABELS[season];
     if (score >= 4) return labels[0];
     if (score >= 3) return labels[1];
     return labels[2];
   }
-  if (metric === "rain") return rainLabel(score);
+  if (metric === "rain") return weatherDescription ?? "맑음";
   if (metric === "humidity" && humDirection) return humLabel(score, humDirection, season);
   if (score >= 4) return AIR_LABELS[0];
   if (score >= 3) return AIR_LABELS[1];
@@ -91,7 +83,7 @@ function gradeLabel(score: number, metric: MetricType, season: Season, humDirect
 }
 
 function MetricTag({
-  icon, label, score, metric, season, humDirection,
+  icon, label, score, metric, season, humDirection, weatherDescription,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -99,10 +91,13 @@ function MetricTag({
   metric: MetricType;
   season: Season;
   humDirection?: HumDirection;
+  weatherDescription?: string;
 }) {
-  const grade = gradeLabel(score, metric, season, humDirection);
+  const grade = gradeLabel(score, metric, season, humDirection, weatherDescription);
   const color =
-    score >= 4
+    metric === "rain" && score < 5
+      ? "text-[var(--metric-bad)]"
+      : score >= 4
       ? "text-[var(--metric-good)]"
       : score >= 3
       ? "text-[var(--metric-mid)]"
@@ -124,6 +119,7 @@ export default function WeatherScoreCard({
   pm25,
   pm10,
   maxPop,
+  weatherDescription,
 }: WeatherScoreCardProps) {
   const month = new Date().getMonth() + 1;
   const { tempScore, humScore, humDirection, airScore, rainScore, overall, season } =
@@ -165,7 +161,7 @@ export default function WeatherScoreCard({
         <MetricTag icon={<Thermometer size={12} className="text-red-400" />}  label="온도" score={tempScore} metric="temp"     season={season} />
         <MetricTag icon={<Droplets size={12} className="text-blue-400" />}    label="습도" score={humScore}  metric="humidity" season={season} humDirection={humDirection} />
         <MetricTag icon={<Leaf size={12} className="text-emerald-400" />}     label="공기" score={airScore}  metric="air"      season={season} />
-        <MetricTag icon={<CloudRain size={12} className="text-blue-400" />}   label="강수" score={rainScore} metric="rain"     season={season} />
+        <MetricTag icon={<CloudRain size={12} className="text-blue-400" />}   label="강수" score={rainScore} metric="rain"     season={season} weatherDescription={weatherDescription} />
       </div>
       </div>
     </section>

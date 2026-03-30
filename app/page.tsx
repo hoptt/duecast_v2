@@ -155,7 +155,6 @@ export default function Home() {
                       />
                       <WeatherMain weather={weatherData.current} />
                       <ActionGuide guide={weatherData.guide} />
-                      <HourlyTimeline forecast={weatherData.forecast} />
                       <div className="grid grid-cols-2 gap-3 px-4">
                         <SunriseSunsetCard sun={weatherData.sun} />
                         <WeatherScoreCard
@@ -165,8 +164,10 @@ export default function Home() {
                           pm25={weatherData.airPollution.pm25}
                           pm10={weatherData.airPollution.pm10}
                           maxPop={currentWeatherToPop(weatherData.current.weather.main)}
+                          weatherDescription={weatherData.current.weather.description}
                         />
                       </div>
+                      <HourlyTimeline forecast={weatherData.forecast} />
                       <div className="px-4">
                         <OutdoorTimingCard
                           forecast={weatherData.forecast}

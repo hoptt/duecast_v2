@@ -5,7 +5,8 @@ import { createPortal } from "react-dom";
 import type { HourlyForecast } from "@/lib/types";
 import { computeScore, buildTags, fmtLabel } from "@/lib/outdoor-score";
 import { WeatherIcon } from "@/lib/weather-icons";
-import { X, Thermometer, Droplets, CloudSun, Star } from "lucide-react";
+import { X, Droplets, CloudRain, Leaf, Star } from "lucide-react";
+import type { ScoreDetail } from "@/lib/outdoor-score";
 
 // ── 공유 서브컴포넌트 ──────────────────────────────────────────────────────
 
@@ -70,14 +71,50 @@ function ScoreBadge({ score }: { score: number }) {
 
 // ── 스탯 셀 ───────────────────────────────────────────────────────────────
 
-function StatCell({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+type GradeVariant = "good" | "neutral" | "bad";
+const GRADE_COLOR: Record<GradeVariant, string> = {
+  good:    "text-[var(--metric-good)]",
+  neutral: "text-[var(--metric-mid)]",
+  bad:     "text-[var(--metric-bad)]",
+};
+
+function StatCell({ icon, label, value, grade, gradeVariant }: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  grade: string;
+  gradeVariant: GradeVariant;
+}) {
   return (
     <div className="flex flex-col items-center gap-1 py-3 flex-1 rounded-xl bg-[var(--overlay-cell)] border border-[var(--overlay-border-subtle)]">
       <span className="leading-none">{icon}</span>
       <span className="text-[15px] font-semibold text-[var(--color-text-main)] tabular-nums">{value}</span>
       <span className="text-[11px] text-[var(--color-text-muted)] uppercase tracking-wide">{label}</span>
+      <span className={`text-[11px] font-semibold ${GRADE_COLOR[gradeVariant]}`}>{grade}</span>
     </div>
   );
+}
+
+// ── 등급 라벨 헬퍼 (outdoor-score metricTag와 동일 로직) ──────────────────
+
+function getHumGrade(d: ScoreDetail): { label: string; variant: GradeVariant } {
+  if (d.humScore >= 4) return { label: d.season === "summer" ? "산뜻" : "뽀송", variant: "good" };
+  if (d.humScore >= 3) return { label: d.humDirection === "humid" ? "습함" : "건조", variant: "neutral" };
+  const label = d.humDirection === "humid"
+    ? (d.season === "summer" ? "끈적" : "눅눅")
+    : (d.season === "winter" ? "바싹" : "까칠");
+  return { label, variant: "bad" };
+}
+
+function getRainGrade(d: ScoreDetail, description: string): { label: string; variant: GradeVariant } {
+  const variant: GradeVariant = d.rainScore >= 4 ? "good" : d.rainScore >= 3 ? "neutral" : "bad";
+  return { label: description, variant };
+}
+
+function getAirGrade(d: ScoreDetail): { label: string; variant: GradeVariant } {
+  if (d.airScore >= 4) return { label: "좋음", variant: "good" };
+  if (d.airScore >= 3) return { label: "보통", variant: "neutral" };
+  return { label: "나쁨", variant: "bad" };
 }
 
 // ── 메인 바텀시트 ─────────────────────────────────────────────────────────
@@ -207,11 +244,36 @@ export default function HourlyDetailSheet({ slot, onClose }: HourlyDetailSheetPr
           </div>
 
           {/* ── 스탯 행 ── */}
-          <div className="flex gap-2 mb-5">
-            <StatCell icon={<Thermometer size={18} className="text-red-400" />} label="기온"    value={`${slot.temp}°C`} />
-            <StatCell icon={<Droplets size={18} className="text-blue-400" />}    label="강수확률" value={`${slot.pop}%`} />
-            <StatCell icon={<CloudSun size={18} className="text-amber-300" />}   label="하늘"    value={slot.weather.description} />
-          </div>
+          {(() => {
+            const humGrade = getHumGrade(detail);
+            const rainGrade = getRainGrade(detail, slot.weather.description);
+            const airGrade = getAirGrade(detail);
+            return (
+              <div className="flex gap-2 mb-5">
+                <StatCell
+                  icon={<Droplets size={18} className="text-blue-400" />}
+                  label="습도"
+                  value={`${slot.humidity}%`}
+                  grade={humGrade.label}
+                  gradeVariant={humGrade.variant}
+                />
+                <StatCell
+                  icon={<CloudRain size={18} className="text-blue-400" />}
+                  label="강수"
+                  value={`${slot.pop}%`}
+                  grade={rainGrade.label}
+                  gradeVariant={rainGrade.variant}
+                />
+                <StatCell
+                  icon={<Leaf size={18} className="text-emerald-400" />}
+                  label="공기"
+                  value={`PM2.5 ${Math.round(slot.pm25)}`}
+                  grade={airGrade.label}
+                  gradeVariant={airGrade.variant}
+                />
+              </div>
+            );
+          })()}
 
           {/* ── 구분선 ── */}
           <div className="border-t border-[var(--overlay-border)] mb-5" />

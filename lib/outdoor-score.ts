@@ -46,7 +46,7 @@ export function computeScore(item: HourlyForecast): ScoreDetail {
 }
 
 // ── 지표별 라벨 생성 ───────────────────────────────────────────────────────
-function metricTag(key: "temp" | "hum" | "air" | "rain", detail: ScoreDetail): Tag {
+function metricTag(key: "temp" | "hum" | "air", detail: ScoreDetail): Tag {
   if (key === "temp") {
     const labels = SEASON_TEMP_LABELS[detail.season];
     if (detail.tempScore >= 4) return { label: labels[0], variant: "good" };
@@ -61,33 +61,26 @@ function metricTag(key: "temp" | "hum" | "air" | "rain", detail: ScoreDetail): T
       : (detail.season === "winter" ? "바싹" : "까칠");
     return { label, variant: "bad" };
   }
-  if (key === "air") {
-    if (detail.airScore >= 4) return { label: "공기 좋음", variant: "good" };
-    if (detail.airScore >= 3) return { label: "공기 보통", variant: "neutral" };
-    return { label: "공기 나쁨", variant: "bad" };
-  }
-  // rain
-  if (detail.rainScore >= 4.5) return { label: "맑음",  variant: "good" };
-  if (detail.rainScore >= 3.5) return { label: "이슬",  variant: "neutral" };
-  if (detail.rainScore >= 2.5) return { label: "주룩",  variant: "bad" };
-  if (detail.rainScore >= 1.5) return { label: "장대",  variant: "bad" };
-  return { label: "폭우", variant: "bad" };
+  // air
+  if (detail.airScore >= 4) return { label: "공기 좋음", variant: "good" };
+  if (detail.airScore >= 3) return { label: "공기 보통", variant: "neutral" };
+  return { label: "공기 나쁨", variant: "bad" };
 }
 
 // ── 날씨 상태 태그 헬퍼 ──────────────────────────────────────────────────────
-function weatherTag(main: string): Tag | null {
+function weatherTag(main: string, description: string, rainScore: number): Tag | null {
   switch (main) {
-    case "Clear":        return { label: "맑음", variant: "good" };
-    case "Clouds":       return { label: "구름", variant: "neutral" };
+    case "Clear":        return { label: "맑음",        variant: "good" };
+    case "Clouds":       return { label: "구름",        variant: "neutral" };
     case "Rain":
-    case "Drizzle":      return { label: "비",   variant: "bad" };
-    case "Snow":         return { label: "눈",   variant: "neutral" };
-    case "Thunderstorm": return { label: "천둥", variant: "bad" };
+    case "Drizzle":      return { label: description,   variant: "bad" };
+    case "Snow":         return { label: description,   variant: "bad" };
+    case "Thunderstorm": return { label: "천둥",        variant: "bad" };
     case "Mist":
     case "Fog":
-    case "Haze":         return { label: "안개", variant: "neutral" };
+    case "Haze":         return { label: "안개",        variant: "neutral" };
     case "Dust":
-    case "Sand":         return { label: "먼지", variant: "bad" };
+    case "Sand":         return { label: "먼지",        variant: "bad" };
     default:             return null;
   }
 }
@@ -116,12 +109,12 @@ export function dominantKey(detail: ScoreDetail): MetricKey {
   return rankedKeys(detail)[0];
 }
 
-// 더보기 리스트용: 날씨 → 온도 → 습도 → 공기 → 강수 고정 순서
+// 더보기 리스트용: 날씨 → 온도 → 습도 → 공기 고정 순서
 export function buildTags(item: HourlyForecast, detail: ScoreDetail): Tag[] {
   const tags: Tag[] = [];
 
-  // ① 날씨 상태 태그
-  const wTag = weatherTag(item.weather.main);
+  // ① 날씨 상태 태그 (강수 강도 포함, rainScore 기반 색상)
+  const wTag = weatherTag(item.weather.main, item.weather.description, detail.rainScore);
   if (wTag) tags.push(wTag);
 
   // ② 온도
@@ -133,9 +126,6 @@ export function buildTags(item: HourlyForecast, detail: ScoreDetail): Tag[] {
   // ④ 공기
   tags.push(metricTag("air", detail));
 
-  // ⑤ 강수 — good(4.5+)은 날씨 상태 태그로 이미 표현되므로 생략
-  if (detail.rainScore < 4.5) tags.push(metricTag("rain", detail));
-
   return tags;
 }
 
@@ -143,16 +133,14 @@ export function buildTags(item: HourlyForecast, detail: ScoreDetail): Tag[] {
 export function buildHeroTags(item: HourlyForecast, detail: ScoreDetail): Tag[] {
   const heroTags: Tag[] = [];
 
-  // ① 날씨 상태 태그
-  const wTag = weatherTag(item.weather.main);
+  // ① 날씨 상태 태그 (강수 강도 포함, rainScore 기반 색상)
+  const wTag = weatherTag(item.weather.main, item.weather.description, detail.rainScore);
   if (wTag) heroTags.push(wTag);
 
-  // ② dominant 태그 — rain good(4.5+)은 날씨 태그와 중복이므로 차순위 사용
+  // ② dominant 태그 — rain은 날씨 태그로 이미 표현되므로 차순위 사용
   const ranked = rankedKeys(detail);
-  const heroKey = (ranked[0] === "rain" && detail.rainScore >= 4.5)
-    ? ranked[1]
-    : ranked[0];
-  heroTags.push(metricTag(heroKey, detail));
+  const heroKey = ranked[0] === "rain" ? ranked[1] : ranked[0];
+  heroTags.push(metricTag(heroKey as "temp" | "hum" | "air", detail));
 
   return heroTags;
 }
