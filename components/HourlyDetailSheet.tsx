@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { HourlyForecast } from "@/lib/types";
 import { computeScore, buildTags, fmtLabel } from "@/lib/outdoor-score";
+import { humTag, airTag, rainTag } from "@/lib/metric-tags";
 import { WeatherIcon } from "@/lib/weather-icons";
 import { X, Droplets, CloudRain, Leaf, Star } from "lucide-react";
-import type { ScoreDetail } from "@/lib/outdoor-score";
 
 // ── 공유 서브컴포넌트 ──────────────────────────────────────────────────────
 
@@ -95,27 +95,6 @@ function StatCell({ icon, label, value, grade, gradeVariant }: {
   );
 }
 
-// ── 등급 라벨 헬퍼 (outdoor-score metricTag와 동일 로직) ──────────────────
-
-function getHumGrade(d: ScoreDetail): { label: string; variant: GradeVariant } {
-  if (d.humScore >= 4) return { label: d.season === "summer" ? "산뜻" : "뽀송", variant: "good" };
-  if (d.humScore >= 3) return { label: d.humDirection === "humid" ? "습함" : "건조", variant: "neutral" };
-  const label = d.humDirection === "humid"
-    ? (d.season === "summer" ? "끈적" : "눅눅")
-    : (d.season === "winter" ? "바싹" : "까칠");
-  return { label, variant: "bad" };
-}
-
-function getRainGrade(d: ScoreDetail, description: string): { label: string; variant: GradeVariant } {
-  const variant: GradeVariant = d.rainScore >= 4 ? "good" : d.rainScore >= 3 ? "neutral" : "bad";
-  return { label: description, variant };
-}
-
-function getAirGrade(d: ScoreDetail): { label: string; variant: GradeVariant } {
-  if (d.airScore >= 4) return { label: "좋음", variant: "good" };
-  if (d.airScore >= 3) return { label: "보통", variant: "neutral" };
-  return { label: "나쁨", variant: "bad" };
-}
 
 // ── 메인 바텀시트 ─────────────────────────────────────────────────────────
 
@@ -245,9 +224,9 @@ export default function HourlyDetailSheet({ slot, onClose }: HourlyDetailSheetPr
 
           {/* ── 스탯 행 ── */}
           {(() => {
-            const humGrade = getHumGrade(detail);
-            const rainGrade = getRainGrade(detail, slot.weather.description);
-            const airGrade = getAirGrade(detail);
+            const humGrade  = humTag(detail.humScore, detail.humDirection, detail.season);
+            const rainGrade = rainTag(slot.weather.main, slot.weather.description);
+            const airGrade  = airTag(detail.airScore);
             return (
               <div className="flex gap-2 mb-5">
                 <StatCell
@@ -280,10 +259,6 @@ export default function HourlyDetailSheet({ slot, onClose }: HourlyDetailSheetPr
 
           {/* ── 야외활동 추천 섹션 ── */}
           <div>
-            <p className="text-xs font-semibold tracking-[0.08em] uppercase text-[var(--color-text-sub)] mb-3">
-              야외활동 추천 타이밍
-            </p>
-
             <div className="flex items-center gap-4 mb-4">
               <ScoreBadge score={score} />
               <div className="flex flex-col gap-1.5">

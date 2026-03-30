@@ -164,6 +164,7 @@ export default function Home() {
                           pm25={weatherData.airPollution.pm25}
                           pm10={weatherData.airPollution.pm10}
                           maxPop={currentWeatherToPop(weatherData.current.weather.main)}
+                          weatherMain={weatherData.current.weather.main}
                           weatherDescription={weatherData.current.weather.description}
                         />
                       </div>

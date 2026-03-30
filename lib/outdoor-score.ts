@@ -8,9 +8,8 @@ import {
   type Season,
   type HumDirection,
 } from "@/lib/seasonal-score";
-
-export type TagVariant = "good" | "neutral" | "bad";
-export interface Tag { label: string; variant: TagVariant }
+import { tempTag, humTag, airTag, rainTag, type Tag } from "@/lib/metric-tags";
+export type { TagVariant, Tag } from "@/lib/metric-tags";
 
 export interface ScoreDetail {
   tempScore: number;
@@ -22,14 +21,6 @@ export interface ScoreDetail {
   season: Season;
 }
 
-// WeatherScoreCard와 동일한 계절별 온도 라벨
-const SEASON_TEMP_LABELS: Record<Season, [string, string, string]> = {
-  spring: ["쾌적", "선선", "쌀쌀"],
-  summer: ["시원", "더움", "폭염"],
-  autumn: ["쾌적", "선선", "쌀쌀"],
-  winter: ["포근", "쌀쌀", "꽁꽁"],
-};
-
 export function computeScore(item: HourlyForecast): ScoreDetail {
   const month = new Date(item.dt * 1000).getMonth() + 1;
   const season = getSeason(month);
@@ -37,7 +28,7 @@ export function computeScore(item: HourlyForecast): ScoreDetail {
   const tempScore = calcTempScore(item.temp, item.feelsLike, season);
   const { score: humScore, direction: humDirection } = calcHumScore(item.humidity, season);
   const airScore  = calcAirScore(item.pm25, item.pm10);
-  const rainScore = calcRainScore(item.pop, season);
+  const rainScore = calcRainScore(item.pop, season, item.weather.main);
 
   // 현재 날씨 평점과 동일한 가중치: 온도 35%, 공기 25%, 강수 25%, 습도 15%
   const overall = Math.round((tempScore * 0.35 + humScore * 0.15 + airScore * 0.25 + rainScore * 0.25) * 10) / 10;
@@ -47,40 +38,25 @@ export function computeScore(item: HourlyForecast): ScoreDetail {
 
 // ── 지표별 라벨 생성 ───────────────────────────────────────────────────────
 function metricTag(key: "temp" | "hum" | "air", detail: ScoreDetail): Tag {
-  if (key === "temp") {
-    const labels = SEASON_TEMP_LABELS[detail.season];
-    if (detail.tempScore >= 4) return { label: labels[0], variant: "good" };
-    if (detail.tempScore >= 3) return { label: labels[1], variant: "neutral" };
-    return { label: labels[2], variant: "bad" };
-  }
-  if (key === "hum") {
-    if (detail.humScore >= 4) return { label: detail.season === "summer" ? "산뜻" : "뽀송", variant: "good" };
-    if (detail.humScore >= 3) return { label: detail.humDirection === "humid" ? "습함" : "건조", variant: "neutral" };
-    const label = detail.humDirection === "humid"
-      ? (detail.season === "summer" ? "끈적" : "눅눅")
-      : (detail.season === "winter" ? "바싹" : "까칠");
-    return { label, variant: "bad" };
-  }
-  // air
-  if (detail.airScore >= 4) return { label: "공기 좋음", variant: "good" };
-  if (detail.airScore >= 3) return { label: "공기 보통", variant: "neutral" };
-  return { label: "공기 나쁨", variant: "bad" };
+  if (key === "temp") return tempTag(detail.tempScore, detail.season);
+  if (key === "hum")  return humTag(detail.humScore, detail.humDirection, detail.season);
+  return airTag(detail.airScore, true); // TagChip용: "공기 좋음/보통/나쁨"
 }
 
 // ── 날씨 상태 태그 헬퍼 ──────────────────────────────────────────────────────
-function weatherTag(main: string, description: string, rainScore: number): Tag | null {
+function weatherTag(main: string, description: string): Tag | null {
   switch (main) {
-    case "Clear":        return { label: "맑음",        variant: "good" };
-    case "Clouds":       return { label: "구름",        variant: "neutral" };
-    case "Rain":
-    case "Drizzle":      return { label: description,   variant: "bad" };
-    case "Snow":         return { label: description,   variant: "bad" };
-    case "Thunderstorm": return { label: "천둥",        variant: "bad" };
+    case "Clear":        return rainTag(main, description);
+    case "Clouds":       return { label: description, variant: "neutral" };
     case "Mist":
     case "Fog":
-    case "Haze":         return { label: "안개",        variant: "neutral" };
+    case "Haze":         return { label: "안개",      variant: "neutral" };
+    case "Rain":
+    case "Drizzle":
+    case "Snow":
+    case "Thunderstorm": return rainTag(main, description);
     case "Dust":
-    case "Sand":         return { label: "먼지",        variant: "bad" };
+    case "Sand":         return { label: "먼지",      variant: "bad" };
     default:             return null;
   }
 }
@@ -114,7 +90,7 @@ export function buildTags(item: HourlyForecast, detail: ScoreDetail): Tag[] {
   const tags: Tag[] = [];
 
   // ① 날씨 상태 태그 (강수 강도 포함, rainScore 기반 색상)
-  const wTag = weatherTag(item.weather.main, item.weather.description, detail.rainScore);
+  const wTag = weatherTag(item.weather.main, item.weather.description);
   if (wTag) tags.push(wTag);
 
   // ② 온도
@@ -134,7 +110,7 @@ export function buildHeroTags(item: HourlyForecast, detail: ScoreDetail): Tag[] 
   const heroTags: Tag[] = [];
 
   // ① 날씨 상태 태그 (강수 강도 포함, rainScore 기반 색상)
-  const wTag = weatherTag(item.weather.main, item.weather.description, detail.rainScore);
+  const wTag = weatherTag(item.weather.main, item.weather.description);
   if (wTag) heroTags.push(wTag);
 
   // ② dominant 태그 — rain은 날씨 태그로 이미 표현되므로 차순위 사용

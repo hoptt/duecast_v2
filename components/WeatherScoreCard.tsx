@@ -2,7 +2,8 @@
 // 온도·습도·공기질·강수 4개 항목 점수로 종합 별점 산출
 
 import { Star, Thermometer, Droplets, Leaf, CloudRain } from "lucide-react";
-import { calculateSeasonalWeatherScore, type Season, type HumDirection } from "@/lib/seasonal-score";
+import { calculateSeasonalWeatherScore } from "@/lib/seasonal-score";
+import { tempTag, humTag, airTag, rainTag, type Tag } from "@/lib/metric-tags";
 
 interface WeatherScoreCardProps {
   temp: number;
@@ -11,6 +12,7 @@ interface WeatherScoreCardProps {
   pm25: number;
   pm10: number;
   maxPop: number;
+  weatherMain: string;
   weatherDescription: string;
 }
 
@@ -44,69 +46,17 @@ function getComment(overall: number): string {
 }
 
 // ── 항목 등급 태그 ─────────────────────────────────────────
-type MetricType = "temp" | "humidity" | "air" | "rain";
 
-// 온도: 계절별 라벨
-const SEASON_TEMP_LABELS: Record<Season, [string, string, string]> = {
-  spring: ["쾌적", "선선", "쌀쌀"],
-  summer: ["시원", "더움", "폭염"],
-  autumn: ["쾌적", "선선", "쌀쌀"],
-  winter: ["포근", "쌀쌀", "꽁꽁"],
-};
-
-// 습도: 방향(건조/습함) + 계절별 라벨
-function humLabel(score: number, direction: HumDirection, season: Season): string {
-  if (score >= 4) return season === "summer" ? "산뜻" : "뽀송";
-  if (direction === "humid") {
-    if (score >= 3) return "습함";
-    return season === "summer" ? "끈적" : "눅눅";
-  }
-  if (score >= 3) return "건조";
-  return season === "winter" ? "바싹" : "까칠";
-}
-
-// 공기: 3단계 고정 라벨
-const AIR_LABELS: [string, string, string] = ["좋음", "보통", "나쁨"];
-
-function gradeLabel(score: number, metric: MetricType, season: Season, humDirection?: HumDirection, weatherDescription?: string): string {
-  if (metric === "temp") {
-    const labels = SEASON_TEMP_LABELS[season];
-    if (score >= 4) return labels[0];
-    if (score >= 3) return labels[1];
-    return labels[2];
-  }
-  if (metric === "rain") return weatherDescription ?? "맑음";
-  if (metric === "humidity" && humDirection) return humLabel(score, humDirection, season);
-  if (score >= 4) return AIR_LABELS[0];
-  if (score >= 3) return AIR_LABELS[1];
-  return AIR_LABELS[2];
-}
-
-function MetricTag({
-  icon, label, score, metric, season, humDirection, weatherDescription,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  score: number;
-  metric: MetricType;
-  season: Season;
-  humDirection?: HumDirection;
-  weatherDescription?: string;
-}) {
-  const grade = gradeLabel(score, metric, season, humDirection, weatherDescription);
+function MetricTag({ icon, label, tag }: { icon: React.ReactNode; label: string; tag: Tag }) {
   const color =
-    metric === "rain" && score < 5
-      ? "text-[var(--metric-bad)]"
-      : score >= 4
-      ? "text-[var(--metric-good)]"
-      : score >= 3
-      ? "text-[var(--metric-mid)]"
-      : "text-[var(--metric-bad)]";
+    tag.variant === "good"    ? "text-[var(--metric-good)]" :
+    tag.variant === "neutral" ? "text-[var(--metric-mid)]"  :
+                                "text-[var(--metric-bad)]";
   return (
     <span className="flex items-center gap-1">
       <span aria-hidden="true">{icon}</span>
       <span className="text-[var(--color-text-sub)]">{label}</span>
-      <span className={`font-semibold ${color}`}>{grade}</span>
+      <span className={`font-semibold ${color}`}>{tag.label}</span>
     </span>
   );
 }
@@ -119,11 +69,12 @@ export default function WeatherScoreCard({
   pm25,
   pm10,
   maxPop,
+  weatherMain,
   weatherDescription,
 }: WeatherScoreCardProps) {
   const month = new Date().getMonth() + 1;
-  const { tempScore, humScore, humDirection, airScore, rainScore, overall, season } =
-    calculateSeasonalWeatherScore({ temp, feelsLike, humidity, pm25, pm10, maxPop, month });
+  const { tempScore, humScore, humDirection, airScore, overall, season } =
+    calculateSeasonalWeatherScore({ temp, feelsLike, humidity, pm25, pm10, maxPop, month, weatherMain });
 
   return (
     <section
@@ -158,10 +109,10 @@ export default function WeatherScoreCard({
 
       {/* 항목 태그 */}
       <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs">
-        <MetricTag icon={<Thermometer size={12} className="text-red-400" />}  label="온도" score={tempScore} metric="temp"     season={season} />
-        <MetricTag icon={<Droplets size={12} className="text-blue-400" />}    label="습도" score={humScore}  metric="humidity" season={season} humDirection={humDirection} />
-        <MetricTag icon={<Leaf size={12} className="text-emerald-400" />}     label="공기" score={airScore}  metric="air"      season={season} />
-        <MetricTag icon={<CloudRain size={12} className="text-blue-400" />}   label="강수" score={rainScore} metric="rain"     season={season} weatherDescription={weatherDescription} />
+        <MetricTag icon={<Thermometer size={12} className="text-red-400" />} label="온도" tag={tempTag(tempScore, season)} />
+        <MetricTag icon={<Droplets size={12} className="text-blue-400" />}   label="습도" tag={humTag(humScore, humDirection, season)} />
+        <MetricTag icon={<Leaf size={12} className="text-emerald-400" />}    label="공기" tag={airTag(airScore)} />
+        <MetricTag icon={<CloudRain size={12} className="text-blue-400" />}  label="강수" tag={rainTag(weatherMain, weatherDescription)} />
       </div>
       </div>
     </section>

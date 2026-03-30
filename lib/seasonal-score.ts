@@ -7,13 +7,14 @@ export type Season = "spring" | "summer" | "autumn" | "winter";
 export type HumDirection = "dry" | "humid" | "ideal";
 
 export interface SeasonalScoreInput {
-  temp: number;      // 현재 기온 (°C)
-  feelsLike: number; // 체감 온도 (°C)
-  humidity: number;  // 습도 (%)
-  pm25: number;      // PM2.5 (μg/m³)
-  pm10: number;      // PM10 (μg/m³)
-  maxPop: number;    // 최대 강수 확률 (0-100)
-  month: number;     // 현재 월 (1-12)
+  temp: number;         // 현재 기온 (°C)
+  feelsLike: number;    // 체감 온도 (°C)
+  humidity: number;     // 습도 (%)
+  pm25: number;         // PM2.5 (μg/m³)
+  pm10: number;         // PM10 (μg/m³)
+  maxPop: number;       // 최대 강수 확률 (0-100)
+  month: number;        // 현재 월 (1-12)
+  weatherMain?: string; // 날씨 상태 (Clouds일 때 흐림 페널티)
 }
 
 export interface WeatherScoreResult {
@@ -113,10 +114,15 @@ const RAIN_CONFIG: Record<Season, { freePop: number; penaltyPer10: number }> = {
   winter: { freePop: 10, penaltyPer10: 0.50 },
 };
 
-export function calcRainScore(maxPop: number, season: Season): number {
+export function calcRainScore(maxPop: number, season: Season, weatherMain?: string): number {
   const cfg = RAIN_CONFIG[season];
   const effectivePop = Math.max(0, maxPop - cfg.freePop);
-  return +Math.max(0, 5.0 - (effectivePop / 10) * cfg.penaltyPer10).toFixed(1);
+  let score = 5.0 - (effectivePop / 10) * cfg.penaltyPer10;
+
+  // 흐림 페널티: 비는 아니지만 맑지 않은 날씨
+  if (weatherMain === "Clouds") score -= 1.0;
+
+  return +Math.max(0, score).toFixed(1);
 }
 
 // ── 종합 점수 ──────────────────────────────────────────────
@@ -127,13 +133,13 @@ function calcOverall(tempScore: number, humScore: number, airScore: number, rain
 
 // ── 메인 함수 ──────────────────────────────────────────────
 export function calculateSeasonalWeatherScore(input: SeasonalScoreInput): WeatherScoreResult {
-  const { temp, feelsLike, humidity, pm25, pm10, maxPop, month } = input;
+  const { temp, feelsLike, humidity, pm25, pm10, maxPop, month, weatherMain } = input;
   const season = getSeason(month);
 
   const tempScore = calcTempScore(temp, feelsLike, season);
   const { score: humScore, direction: humDirection } = calcHumScore(humidity, season);
   const airScore  = calcAirScore(pm25, pm10);
-  const rainScore = calcRainScore(maxPop, season);
+  const rainScore = calcRainScore(maxPop, season, weatherMain);
   const overall   = calcOverall(tempScore, humScore, airScore, rainScore);
 
   return { tempScore, humScore, humDirection, airScore, rainScore, overall, season };
