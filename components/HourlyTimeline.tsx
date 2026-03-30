@@ -3,7 +3,6 @@
 import { useState, useRef } from "react";
 import type { HourlyForecast } from "@/lib/types";
 import { WeatherIcon } from "@/lib/weather-icons";
-import { Droplets } from "lucide-react";
 import HourlyDetailSheet from "@/components/HourlyDetailSheet";
 
 interface HourlyTimelineProps {
@@ -88,12 +87,6 @@ export default function HourlyTimeline({ forecast, pm25, pm10, className = "mx-4
               <span className="text-xs font-medium text-[var(--color-text-main)] tabular-nums">
                 {slot.temp}°
               </span>
-              {slot.pop > 0 && (
-                <span className="text-[11px] tabular-nums flex items-center gap-0.5" style={{ color: "var(--precip-text)" }}>
-                  <Droplets size={10} aria-hidden="true" />
-                  {slot.pop}%
-                </span>
-              )}
             </button>
           ))}
         </div>
